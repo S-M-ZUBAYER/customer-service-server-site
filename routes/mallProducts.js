@@ -1,48 +1,48 @@
-const express=require("express")
-const connection=require("../config/db")
-const router=express.Router()
+const express = require("express")
+const connection = require("../config/db")
+const router = express.Router()
 const cors = require("cors");
 
 // import multer from "multer";
-const multer =require("multer")
+const multer = require("multer")
 // import path from "path";
-const path= require("path")
+const path = require("path")
 
 
 
 // router.use(express.static('public/images'));
 router.use(express.static('public'))
 
-const storage=multer.diskStorage({
-    destination: (req,file,cb)=>{
-        cb(null,'public/mallProductImages')
-    },
-    filename:(req,file,cb)=>{
-        cb(null,file.fieldname+"_"+Date.now()+path.extname(file.originalname) )
-    }
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/mallProductImages')
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname))
+  }
 })
 
-const upload=multer({
-    storage:storage
+const upload = multer({
+  storage: storage
 })
 
 
-const app=express();
+const app = express();
 app.use(cors());
 // app.use('/uploads', express.static('uploads'));
 // app.use("/uploads",express.static("uploads"))
 
 
 router.get('/mallProducts', (req, res) => {
-    connection.query('SELECT * FROM mallproducts', (error, results) => {
-      if (error) {
-        console.error('Error retrieving products:', error);
-        res.status(500).send('Error retrieving products');
-      } else {
-        res.json(results);
-      }
-    });
+  connection.query('SELECT * FROM mallproducts', (error, results) => {
+    if (error) {
+      console.error('Error retrieving products:', error);
+      res.status(500).send('Error retrieving products');
+    } else {
+      res.json(results);
+    }
   });
+});
 
 
 
@@ -67,54 +67,92 @@ router.get('/mallProducts', (req, res) => {
 //     // res.status(200).json({"message":"Success"});
 //     });
 
-    router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFile' }]), (req, res) => {
-    // router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFile' }]), (req, res) => {
-        const {
-          productName,
-          productPrice,
-          productDescription,
-          modelNumber,
-          printerColor,
-          connectorType,
-          stockQuantity,
-          shelfStartTime,
-          shelfEndTime,
-          afterSalesText,
-          afterSalesInstruction,
-          inventoryText
-        } = req.body;
-      
-        const productImg = req.files['productImg'][0];
-        const invoiceFile = req.files['invoiceFile'][0];
-      
-        const product = {
-          productName,
-          productPrice,
-          productDescription,
-          modelNumber,
-          printerColor,
-          connectorType,
-          stockQuantity,
-          shelfStartTime,
-          shelfEndTime,
-          afterSalesText,
-          afterSalesInstruction,
-          inventoryText,
-          productImg: productImg.filename,
-          invoiceFile: invoiceFile.filename
-        };
-      
-        connection.query('INSERT INTO mallproducts SET ?', product, (error, results) => {
-          if (error) {
-            console.error('Error creating product:', error);
-            res.status(500).send('Error creating product');
-          } else {
-            console.log('Product created successfully');
-            res.send('Product created successfully');
-          }
-        });
-      });
-      
+router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFile' }, { name: 'images' }, { name: 'videos' }]), (req, res) => {
+  // router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFile' }]), (req, res) => {
+  const {
+    productName,
+    productPrice,
+    productDescription,
+    modelNumber,
+    printerColor,
+    connectorType,
+    stockQuantity,
+    shelfStartTime,
+    shelfEndTime,
+    afterSalesText,
+    afterSalesInstruction,
+    inventoryText
+  } = req.body;
+
+  const productImg = req.files['productImg'][0];
+  const invoiceFile = req.files['invoiceFile'][0];
+  // const allImages = req.files.images
+  // const allVideos = req.files.videos
+
+
+
+  // const allImages = images.map((element,index)=>{
+  //   req.files[element][index]
+  // });
+  // const allVideos = videos.map((element,index)=>{
+  //   req.files[element][index]
+  // });;
+
+  // console.log("1st--",allImages,"1st")
+  // console.log("2nd---",allVideos,"2nd")
+
+  const product = {
+    productName,
+    productPrice,
+    productDescription,
+    modelNumber,
+    printerColor,
+    connectorType,
+    stockQuantity,
+    shelfStartTime,
+    shelfEndTime,
+    afterSalesText,
+    afterSalesInstruction,
+    inventoryText,
+    productImg: productImg.filename,
+    invoiceFile: invoiceFile.filename,
+
+  };
+  const allImages = req.files['images'];
+  const allVideos = req.files['videos'];
+
+  // Check if files are present
+  if (allImages && allImages.length > 0) {
+    product.allImages = allImages.map((file) => file.filename);
+  }
+
+  if (allVideos && allVideos.length > 0) {
+    product.allVideos = allVideos.map((file) => file.filename);
+  }
+  console.log(typeof (product.allImages), typeof (product.allVideos))
+
+
+  // connection.query('INSERT INTO mallproducts SET ?', product, (error, results) => {
+  //   if (error) {
+  //     console.error('Error creating product:', error);
+  //     res.status(500).send('Error creating product');
+  //   } else {
+  //     console.log('Product created successfully');
+  //     res.send('Product created successfully');
+  //   }
+  // });
+
+  connection.query('INSERT INTO mallproducts (productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages, allVideos) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg.filename, invoiceFile.filename, allImages.map((file) => file.filename).join(','), allVideos.map((file) => file.filename).join(',')], (error, results) => {
+    if (error) {
+      console.error('Error creating product:', error);
+      res.status(500).send('Error creating product');
+    } else {
+      console.log('Product created successfully');
+      res.send('Product created successfully');
+    }
+  });
+});
+
 
 
 
@@ -123,10 +161,10 @@ router.get('/mallProducts', (req, res) => {
 // //part for get and post data for all of the unknown questions
 // router.get('/unknownQuestions', (req, res) => {
 //     const email = req.query.email;
-  
+
 //     // Perform a query to find data by email
 //     const query = `SELECT * FROM unknownquestions WHERE email = '${email}'`;
-  
+
 //     connection.query(query, (error, results) => {
 //       if (error) {
 //         console.error('Error executing query:', error);
@@ -167,10 +205,10 @@ router.get('/mallProducts', (req, res) => {
 // router.get('/translationsQuestions', (req, res) => {
 //     const email = req.query.email;
 //     console.log(email)
-  
+
 //     // Perform a query to find data by email
 //     const query = `SELECT * FROM translationsquestions WHERE email = '${email}'`;
-  
+
 //     connection.query(query, (error, results) => {
 //       if (error) {
 //         console.error('Error executing query:', error);
@@ -208,4 +246,4 @@ router.get('/mallProducts', (req, res) => {
 
 
 
-module.exports=router;
+module.exports = router;
