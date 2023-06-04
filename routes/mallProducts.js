@@ -155,6 +155,97 @@ router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 
 
 
 
+router.put('/mallProducts/update/:id', upload.fields([{ name: 'productImg' }, { name: 'invoiceFile' }, { name: 'images' }, { name: 'videos' }]), (req, res)=>{
+  // INSERT INTO `players`(`id`, `name`, `club`) VALUES ('[value-1]','[value-2]','[value-3]')
+
+  const {
+    productName,
+    productPrice,
+    productDescription,
+    modelNumber,
+    printerColor,
+    connectorType,
+    stockQuantity,
+    shelfStartTime,
+    shelfEndTime,
+    afterSalesText,
+    afterSalesInstruction,
+    inventoryText
+  } = req.body;
+
+  const productImg = req.files['productImg'][0];
+  const invoiceFile = req.files['invoiceFile'][0];
+  // const allImages = req.files.images
+  // const allVideos = req.files.videos
+
+
+
+  // const allImages = images.map((element,index)=>{
+  //   req.files[element][index]
+  // });
+  // const allVideos = videos.map((element,index)=>{
+  //   req.files[element][index]
+  // });;
+
+  // console.log("1st--",allImages,"1st")
+  // console.log("2nd---",allVideos,"2nd")
+
+  const product = {
+    productName,
+    productPrice,
+    productDescription,
+    modelNumber,
+    printerColor,
+    connectorType,
+    stockQuantity,
+    shelfStartTime,
+    shelfEndTime,
+    afterSalesText,
+    afterSalesInstruction,
+    inventoryText,
+    productImg: productImg.filename,
+    invoiceFile: invoiceFile.filename,
+
+  };
+  const allImages = req.files['images'];
+  const allVideos = req.files['videos'];
+
+  // Check if files are present
+  if (allImages && allImages.length > 0) {
+    product.allImages = allImages.map((file) => file.filename);
+  }
+
+  if (allVideos && allVideos.length > 0) {
+    product.allVideos = allVideos.map((file) => file.filename);
+  }
+  console.log(typeof (product.allImages), typeof (product.allVideos))
+
+  let sql = `UPDATE mallproducts SET productName='${productName}', productPrice='${productPrice}', productDescription='${productDescription}',modelNumber='${modelNumber}', printerColor='${printerColor}', connectorType='${connectorType}', stockQuantity='${stockQuantity}',shelfStartTime='${shelfStartTime}', shelfEndTime='${shelfEndTime}', afterSalesText='${afterSalesText}',  afterSalesInstruction='${afterSalesInstruction}',inventoryText='${inventoryText}', productImg='${productImg.filename}', invoiceFile='${invoiceFile}', allImages='${allImages.map((file) => file.filename).join(',')}',allVideos='${allVideos.map((file) => file.filename).join(',')}' WHERE id=?`;
+  connection.query(sql, [req.params.id],  function(err, result){
+     if (err) throw err;
+     console.log("successfully updated", result);
+     res.json(result);;
+  });
+  // res.send("<h1>Hello world</h1>");
+  // res.status(200).json({"Message": "Success"});
+});
+
+
+
+    // let sql = `DELETE FROM mallproducts WHERE id=?`;
+    router.delete('/mallProducts/delete/:id', (req, res)=>{
+      // INSERT INTO `mallproducts`(`id`, `name`, `club`) VALUES ('[value-1]','[value-2]','[value-3]')
+  
+    
+    
+      const sql = `DELETE FROM mallproducts WHERE id=?`;
+      connection.query(sql, [req.params.id],  function(err, result){
+         if (err) throw err;
+         console.log("successfully Delete", result);
+         res.json(result);
+      });
+    });
+
 
 
 
