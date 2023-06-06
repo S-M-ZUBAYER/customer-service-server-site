@@ -24,6 +24,106 @@ router.get('/questions', (req, res) => {
     });
   });
 
+//create a route to delete all questions from database according to the user
+  router.delete('/questions/delete/:email', (req, res) => {
+    const email = req.params.email;
+  
+    const deleteSql = 'DELETE FROM questions WHERE email = ?';
+  
+    connection.query(deleteSql, [email], (error, result) => {
+      if (error) {
+        console.error('Error deleting questions:', error);
+        res.status(500).send('Error deleting questions');
+        return;
+      }
+  
+      console.log('Questions deleted successfully');
+      res.json(result);
+    });
+  });
+  
+
+//create a route to delete all unknown questions from database according to the user
+
+  router.delete('/unknownQuestions/delete/:email', (req, res) => {
+    const email = req.params.email;
+  
+    const deleteSql = 'DELETE FROM unknownquestions WHERE email = ?';
+  
+    connection.query(deleteSql, [email], (error, result) => {
+      if (error) {
+        console.error('Error deleting questions:', error);
+        res.status(500).send('Error deleting questions');
+        return;
+      }
+  
+      console.log('Questions deleted successfully');
+      res.json(result);
+    });
+  });
+
+
+  //create a route to delete a unknown questions from database according to the user
+
+  router.delete('/unknownQuestions/deleteById/:id', (req, res) => {
+    const id = req.params.id;
+    console.log(id)
+  
+    const deleteSql = 'DELETE FROM unknownquestions WHERE id = ?';
+  
+    connection.query(deleteSql, [id], (error, result) => {
+      if (error) {
+        console.error('Error deleting questions:', error);
+        res.status(500).send('Error deleting questions');
+        return;
+      }
+  
+      console.log('Questions deleted successfully');
+      res.json(result);
+    });
+  });
+
+
+
+//create a route to delete all unknown questions from database according to the user
+
+  router.delete('/translateData/delete/:email', (req, res) => {
+    const email = req.params.email;
+  
+    const deleteSql = 'DELETE FROM translationsquestions WHERE email = ?';
+  
+    connection.query(deleteSql, [email], (error, result) => {
+      if (error) {
+        console.error('Error deleting questions:', error);
+        res.status(500).send('Error deleting questions');
+        return;
+      }
+  
+      console.log('Questions deleted successfully');
+      res.json(result);
+    });
+  });
+
+   //create a route to delete a unknown questions from database according to the user
+
+   router.delete('/translationQuestions/deleteById/:id', (req, res) => {
+    const id = req.params.id;
+    console.log(id)
+  
+    const deleteSql = 'DELETE FROM translationsquestions WHERE id = ?';
+  
+    connection.query(deleteSql, [id], (error, result) => {
+      if (error) {
+        console.error('Error deleting questions:', error);
+        res.status(500).send('Error deleting questions');
+        return;
+      }
+  
+      console.log('Questions deleted successfully');
+      res.json(result);
+    });
+  });
+  
 
 
 router.post('/questions/add',(req,res)=>{
@@ -46,6 +146,8 @@ router.post('/questions/add',(req,res)=>{
     // res.send("THT-Space Electrical Company Ltd Sever Running")
     // res.status(200).json({"message":"Success"});
     });
+
+    
 
 
 

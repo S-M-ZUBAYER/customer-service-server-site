@@ -6,6 +6,7 @@ const cors = require('cors');
 const multer =require("multer")
 // import path from "path";
 const path= require("path")
+const fs = require('fs');
 
 const app=express();
 app.use(cors());
@@ -47,7 +48,7 @@ const upload=multer({
 router.get('/icons', (req, res) => {
  
   const category = req.query.categoryName;
-  console.log(category)
+ 
     // Perform a query to find data by email
     // const query = `SELECT * FROM icons WHERE email = '${email}'`;
      // Perform a query to find data by email
@@ -119,7 +120,7 @@ router.get('/categories', (req, res) => {
 //     });
     
 router.post('/icons/add',upload.single("image"),(req,res)=>{
-    console.log(req.file)
+   
     const image=req.file.filename;
     const userEmail=req.body.email;
     const categoryName=req.body.categoryName;
@@ -158,19 +159,60 @@ router.post('/icons/add',upload.single("image"),(req,res)=>{
 
 
     // let sql = `DELETE FROM players WHERE id=?`;
-router.delete('/icons/delete/:id', (req, res)=>{
-  // INSERT INTO `players`(`id`, `name`, `club`) VALUES ('[value-1]','[value-2]','[value-3]')
-  console.log(req.params.id);
+// router.delete('/icons/delete/:id', (req, res)=>{
+//   console.log(req.params.id);
 
-console.log("Deleted user");
-  const sql = `DELETE FROM icons WHERE id=?`;
-  connection.query(sql, [req.params.id],  function(err, result){
-     if (err) throw err;
-     console.log("successfully Delete", result);
-     res.json(result);
+// console.log("Deleted user");
+//   const sql = `DELETE FROM icons WHERE id=?`;
+//   connection.query(sql, [req.params.id],  function(err, result){
+//      if (err) throw err;
+//      console.log("successfully Delete", result);
+//      res.json(result);
+//   });
+// });
+router.delete('/icons/delete/:id', (req, res) => {
+  const iconId = req.params.id;
+  
+
+  const sql = `SELECT * FROM icons WHERE id = ?`;
+  connection.query(sql, [iconId], function(err, rows) {
+    if (err) {
+      console.error('Error retrieving icon:', err);
+      res.status(500).send('Error retrieving icon');
+      return;
+    }
+
+    if (rows.length === 0) {
+      res.status(404).send('Icon not found');
+      return;
+    }
+
+    const icon = rows[0];
+  
+    const filePath = `public/images/${icon.icon}`;
+ 
+
+    fs.unlink(filePath, function(err) {
+      if (err) {
+        console.error('Error deleting file:', err);
+        res.status(500).send('Error deleting file');
+        return;
+      }
+
+      const deleteSql = `DELETE FROM icons WHERE id = ?`;
+      connection.query(deleteSql, [iconId], function(err, result) {
+        if (err) {
+          console.error('Error deleting icon from database:', err);
+          res.status(500).send('Error deleting icon from database');
+          return;
+        }
+
+        console.log('Icon deleted successfully');
+        res.json(result);
+      });
+    });
   });
 });
-
 
 
 module.exports=router;
