@@ -1,12 +1,21 @@
 const mysql=require("mysql");
+require('dotenv').config();
 
 
 //create a connection with mysql
+// var connection = mysql.createConnection({
+//     host     : 'localhost',
+//     user     : 'root',
+//     password : '',
+//     database : 'tht-customer-service'
+//   });
+  
+//create a connection with mysql
 var connection = mysql.createConnection({
-    host     : 'localhost',
-    user     : 'root',
+    host     : process.env.DBHost,
+    user     : process.env.DBUser,
     password : '',
-    database : 'tht-customer-service'
+    database : process.env.DBName
   });
 
   

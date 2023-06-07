@@ -1,3 +1,5 @@
+//Require necessary packages
+
 const express=require("express")
 const connection=require("../config/db")
 const router=express.Router()
@@ -7,7 +9,8 @@ const app=express();
 app.use(cors())
 
 
-//part for get and post data for all of the questions
+//create the route and function to get all the Questions according to the email address
+
 router.get('/questions', (req, res) => {
     const email = req.query.email;
   
@@ -125,9 +128,10 @@ router.get('/questions', (req, res) => {
   });
   
 
+//create the route and function to add all the Question Answer store according to the email address
 
 router.post('/questions/add',(req,res)=>{
-    // INSERT INTO `questions`(`id`, `question`,`email`) VALUES ('[value-1]','[value-2]','[value-3]')
+
     const allQuestions=[
         req.body.email,
         req.body.question,
@@ -141,17 +145,17 @@ router.post('/questions/add',(req,res)=>{
         if(err) throw err;
         console.log("successfully inserted");
         res.json(result);
-        // res.redirect("/users")
+       
     })
-    // res.send("THT-Space Electrical Company Ltd Sever Running")
-    // res.status(200).json({"message":"Success"});
+   
     });
 
     
 
 
 
-//part for get and post data for all of the unknown questions
+//create the route and function to load all the unknown Answer store according to the email address
+
 router.get('/unknownQuestions', (req, res) => {
     const email = req.query.email;
   
@@ -169,9 +173,10 @@ router.get('/unknownQuestions', (req, res) => {
   });
 
 
+//create the route and function to add all the Unknown Question Answer store according to the email address
 
 router.post('/unknownQuestions/add',(req,res)=>{
-    // INSERT INTO `questions`(`id`, `unknownQuestion`,`email`,`date`,`time`) VALUES ('[value-1]','[value-2]','[value-3]','[value-4]','[value-5]')
+ 
     const allUnknownQuestions=[
         req.body.email,
         req.body.question,
@@ -179,22 +184,21 @@ router.post('/unknownQuestions/add',(req,res)=>{
         req.body.time,
 
     ]
-    console.log(allUnknownQuestions)
+    
     let sql="INSERT INTO unknownquestions (email,question,date,time) VALUES (?)";
     connection.query(sql,[allUnknownQuestions],(err,result)=>{
         if(err) throw err;
         console.log("Unknown successfully inserted");
         res.json(result);
-        // res.redirect("/users")
     })
-    // res.send("THT-Space Electrical Company Ltd Sever Running")
-    // res.status(200).json({"message":"Success"});
+
     });
 
 
 
 
-//part for get and post data for all of the unknown questions
+//create the route and function to get all the translations Question and translation according to the email address
+
 router.get('/translationsQuestions', (req, res) => {
     const email = req.query.email;
     console.log(email)
@@ -213,9 +217,10 @@ router.get('/translationsQuestions', (req, res) => {
   });
 
 
+//create the route and function to add all the translation Question and translations store according to the email address
 
 router.post('/translationsQuestions/add',(req,res)=>{
-    // INSERT INTO `questions`(`id`, `unknownQuestion`,`email`,`date`,`time`) VALUES ('[value-1]','[value-2]','[value-3]','[value-4]','[value-5]')
+ 
     const allTranslationsQuestions=[
         req.body.email,
         req.body.question,
@@ -231,10 +236,9 @@ router.post('/translationsQuestions/add',(req,res)=>{
         if(err) throw err;
         console.log("Translations questions successfully inserted");
         res.json(result);
-        // res.redirect("/users")
+   
     })
-    // res.send("THT-Space Electrical Company Ltd Sever Running")
-    // res.status(200).json({"message":"Success"});
+ 
     });
 
 

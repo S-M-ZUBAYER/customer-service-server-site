@@ -1,3 +1,5 @@
+//Require necessary packages
+
 const express =require("express");
 const connection = require("../config/db");
 const router=express.Router();
@@ -7,10 +9,10 @@ const app=express();
 app.use(cors());
 
 
+//create the route and function to got all user information from database
+
 router.get('/allUsers', (req, res) => {
   
-  
-    // Perform to get all data
     const query = `SELECT * FROM users WHERE 1`;
   
     connection.query(query, (error, results) => {
@@ -24,6 +26,7 @@ router.get('/allUsers', (req, res) => {
   });
 
 
+  //create the route and function to get the specific user information according to their email
 router.get('/users', (req, res) => {
     const email = req.query.email;
   
@@ -42,9 +45,9 @@ router.get('/users', (req, res) => {
 
  
 
+//create the route and function to add user in database at the time to register their new account
 
 router.post('/users/add',(req,res)=>{
-    // INSERT INTO `users`(`id`, `Name`, `image`, `phone`, `country`, `language`, `email`, `designation`) VALUES ('[value-1]','[value-2]','[value-3]','[value-4]','[value-5]','[value-6]','[value-7]','[value-8]')
     const user=[
         req.body.name,
         req.body.image,
@@ -54,27 +57,24 @@ router.post('/users/add',(req,res)=>{
         req.body.email,
         req.body.designation
     ]
+
     let sql="INSERT INTO users (name, image, phone, country, language, email, designation) VALUES (?)";
+
     connection.query(sql,[user],(err,result)=>{
         if(err) throw err;
         console.log("successfully inserted");
         res.json(result);
     })
-    // res.send("THT-Space Electrical Company Ltd Sever Running")
-    // res.status(200).json({"message":"Success"});
+  
     });
     
 
-    // router.delete('/users/:id', async (req, res) => {
-    //   const userId = req.params.id;
-      
-    //   try {
-    //     console.log(userId)
+    
      
     
+//create the route and function to update a specific user information according to the email address
 
     router.put('/users/update/:id', (req, res)=>{
-      // INSERT INTO `players`(`id`, `name`, `club`) VALUES ('[value-1]','[value-2]','[value-3]')
     
     console.log("update user");
     
@@ -86,14 +86,13 @@ router.post('/users/add',(req,res)=>{
          console.log("successfully updated", result);
          res.json(result);;
       });
-      // res.send("<h1>Hello world</h1>");
-      // res.status(200).json({"Message": "Success"});
+   
     });
 
 
 
-
-    // let sql = `DELETE FROM players WHERE id=?`;
+//create the route and function to delete a specific user information according to the email address
+  
 router.delete('/users/delete/:id', (req, res)=>{
   // INSERT INTO `players`(`id`, `name`, `club`) VALUES ('[value-1]','[value-2]','[value-3]')
   console.log(req.params.id);

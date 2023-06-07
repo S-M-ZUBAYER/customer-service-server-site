@@ -1,3 +1,5 @@
+//Require necessary packages
+
 const express =require("express");
 const connection = require("../config/db");
 const router=express.Router();
@@ -8,12 +10,11 @@ app.use(cors());
 
 
 
+//create the route and function to get the the Question Answer store according to the email address
 
 router.get('/QandAnswers', (req, res) => {
     const email = req.query.email;
-  console.log(email)
-    // Perform a query to find data by email
-    // const query = `SELECT * FROM questionanswers WHERE email = '${email}'`;
+
     const query = `SELECT * FROM questionanswers WHERE email = '${email}'`;
     
     connection.query(query, (error, results) => {
@@ -29,9 +30,10 @@ router.get('/QandAnswers', (req, res) => {
 
  
 
+//create the route and function to add new Question answer according to email address
 
 router.post('/QandAnswers/add',(req,res)=>{
-    // INSERT INTO `users`(`id`, `Name`, `image`, `phone`, `country`, `language`, `email`, `designation`) VALUES ('[value-1]','[value-2]','[value-3]','[value-4]','[value-5]','[value-6]','[value-7]','[value-8]')
+   
     const QandA=[
         req.body.email,
         req.body.question,
@@ -43,17 +45,16 @@ router.post('/QandAnswers/add',(req,res)=>{
         console.log("successfully inserted");
         res.json(result);
     })
-    // res.send("THT-Space Electrical Company Ltd Sever Running")
-    // res.status(200).json({"message":"Success"});
+    
     });
     
 
    
      
     
+//create the route and function to update Question answer according to email address
 
     router.put('/QandAnswers/update/:id', (req, res)=>{
-      // INSERT INTO `players`(`id`, `name`, `club`) VALUES ('[value-1]','[value-2]','[value-3]')
     
     console.log("update user");
     
@@ -65,16 +66,15 @@ router.post('/QandAnswers/add',(req,res)=>{
          console.log("successfully updated", result);
          res.json(result);;
       });
-      // res.send("<h1>Hello world</h1>");
-      // res.status(200).json({"Message": "Success"});
+     
     });
 
 
 
-
-    // let sql = `DELETE FROM players WHERE id=?`;
+//create the route and function to add delete specific Question answer according to the id
+    
 router.delete('/QandAnswers/delete/:id', (req, res)=>{
-  // INSERT INTO `players`(`id`, `name`, `club`) VALUES ('[value-1]','[value-2]','[value-3]')
+
   console.log(req.params.id);
 
 console.log("Deleted user");
