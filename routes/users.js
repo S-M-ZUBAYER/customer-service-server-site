@@ -89,6 +89,22 @@ router.post('/users/add',(req,res)=>{
    
     });
 
+//create the route and function to update a specific user's admin information according to the email address
+
+    router.put('/users/update/admin/:id', (req, res)=>{
+  
+    
+      // const isAdmin = true;
+      // console.log(isAdmin)
+      let sql = `UPDATE users SET isAdmin='${true}' WHERE id=?`;
+      connection.query(sql, [req.params.id],  function(err, result){
+         if (err) throw err;
+         console.log("successfully updated", result);
+         res.json(result);;
+      });
+   
+    });
+
 
 
 //create the route and function to delete a specific user information according to the email address

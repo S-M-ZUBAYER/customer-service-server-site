@@ -17,7 +17,8 @@ const connection=require("./config/db")
 
 
 const app=express();
-const port=process.env.PORT || 5000;
+// const port=process.env.PORT || 5000;
+// const port=5000;
 
 
 //user: tht_user
@@ -30,7 +31,7 @@ app.use(express.urlencoded({extended:false}));
 
 //create a function to connect with database
 connection.connect((err)=>{
-  if(err) throw err;
+  if(err) throw err; 
   console.log("Db is connected successfully:", connection.threadId)
 })
 
