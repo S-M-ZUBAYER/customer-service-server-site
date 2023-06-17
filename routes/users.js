@@ -76,10 +76,10 @@ router.post('/users/add',(req,res)=>{
 
     router.put('/users/update/:id', (req, res)=>{
     
-    console.log("update user");
+    
     
       const {name,phone,designation,language,country} = req.body;
-      console.log(name,phone,designation,language,country);
+     
       let sql = `UPDATE users SET name='${name}', phone='${phone}', designation='${designation}', language='${language}', country='${country}' WHERE id=?`;
       connection.query(sql, [req.params.id],  function(err, result){
          if (err) throw err;
@@ -113,7 +113,7 @@ router.delete('/users/delete/:id', (req, res)=>{
   // INSERT INTO `players`(`id`, `name`, `club`) VALUES ('[value-1]','[value-2]','[value-3]')
   console.log(req.params.id);
 
-console.log("Deleted user");
+
   const sql = `DELETE FROM users WHERE id=?`;
   connection.query(sql, [req.params.id],  function(err, result){
      if (err) throw err;

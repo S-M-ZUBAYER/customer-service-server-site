@@ -9,7 +9,10 @@ require('dotenv').config();
 //     password : '',
 //     database : 'tht-customer-service'
 //   });
-console.log(process.env.DBHost,process.env.DBUser,process.env.DBpassword,process.env.DBName,process.env.DBPort)
+
+
+
+// console.log(process.env.DBHost,process.env.DBUser,process.env.DBpassword,process.env.DBName,process.env.DBPort)
 //create a connection with mysql
 var connection = mysql.createConnection({
   host: process.env.DBHost,
@@ -17,6 +20,10 @@ var connection = mysql.createConnection({
   password: process.env.DBpassword,
   database: process.env.DBName,
   port: process.env.DBPort
+  
+
+
+
 });
 
 

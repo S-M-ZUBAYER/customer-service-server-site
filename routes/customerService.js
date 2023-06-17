@@ -70,7 +70,7 @@ router.get('/questions', (req, res) => {
 
   router.delete('/unknownQuestions/deleteById/:id', (req, res) => {
     const id = req.params.id;
-    console.log(id)
+   
   
     const deleteSql = 'DELETE FROM unknownquestions WHERE id = ?';
   
@@ -111,7 +111,7 @@ router.get('/questions', (req, res) => {
 
    router.delete('/translationQuestions/deleteById/:id', (req, res) => {
     const id = req.params.id;
-    console.log(id)
+
   
     const deleteSql = 'DELETE FROM translationsquestions WHERE id = ?';
   
@@ -139,7 +139,7 @@ router.post('/questions/add',(req,res)=>{
         req.body.time,
 
     ]
-    console.log(allQuestions)
+    
     let sql="INSERT INTO questions (email,question,date,time) VALUES (?)";
     connection.query(sql,[allQuestions],(err,result)=>{
         if(err) throw err;
@@ -201,7 +201,6 @@ router.post('/unknownQuestions/add',(req,res)=>{
 
 router.get('/translationsQuestions', (req, res) => {
     const email = req.query.email;
-    console.log(email)
   
     // Perform a query to find data by email
     const query = `SELECT * FROM translationsquestions WHERE email = '${email}'`;
@@ -230,7 +229,7 @@ router.post('/translationsQuestions/add',(req,res)=>{
         req.body.time,
 
     ]
-    console.log(allTranslationsQuestions)
+
     let sql="INSERT INTO translationsquestions (email,question,english,bangla,date,time) VALUES (?)";
     connection.query(sql,[allTranslationsQuestions],(err,result)=>{
         if(err) throw err;

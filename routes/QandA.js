@@ -37,9 +37,11 @@ router.post('/QandAnswers/add',(req,res)=>{
     const QandA=[
         req.body.email,
         req.body.question,
-        req.body.answer
+        req.body.answer,
+        req.body.date,
+        req.body.time
     ]
-    let sql="INSERT INTO questionanswers (email,question, answer) VALUES (?)";
+    let sql="INSERT INTO questionanswers (email,question, answer,date,time) VALUES (?)";
     connection.query(sql,[QandA],(err,result)=>{
         if(err) throw err;
         console.log("successfully inserted");
@@ -59,7 +61,7 @@ router.post('/QandAnswers/add',(req,res)=>{
     console.log("update user");
     
       const {email,question,answer,date,time} = req.body;
-      console.log(email,question,answer,date,time);
+      
       let sql = `UPDATE questionanswers SET email='${email}', question='${question}', answer='${answer}',date='${date}', time='${time}' WHERE id=?`;
       connection.query(sql, [req.params.id],  function(err, result){
          if (err) throw err;
@@ -75,9 +77,9 @@ router.post('/QandAnswers/add',(req,res)=>{
     
 router.delete('/QandAnswers/delete/:id', (req, res)=>{
 
-  console.log(req.params.id);
+  
 
-console.log("Deleted user");
+
   const sql = `DELETE FROM questionanswers WHERE id=?`;
   connection.query(sql, [req.params.id],  function(err, result){
      if (err) throw err;

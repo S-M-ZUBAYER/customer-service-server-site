@@ -77,7 +77,9 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
     shelfEndTime,
     afterSalesText,
     afterSalesInstruction,
-    inventoryText
+    inventoryText,
+  date,
+  time
   } = req.body;
 
   const productImg = req.files['productImg'][0];
@@ -99,6 +101,8 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
     afterSalesText,
     afterSalesInstruction,
     inventoryText,
+    date,
+    time,
     productImg: productImg.filename,
 
   };
@@ -117,10 +121,10 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
   if (allVideos && allVideos.length > 0) {
     product.allVideos = allVideos.map((file) => file.filename);
   }
-  console.log(typeof (product.allImages), typeof (product.allVideos),typeof (product.invoiceFiles))
+  console.log(typeof (product.allImages), typeof (product.allVideos),typeof (product.invoiceFiles),date,time)
 
 
-  connection.query('INSERT INTO eventproducts (productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages, allVideos) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg.filename,invoiceFiles.map((file) => file.filename).join(','), allImages.map((file) => file.filename).join(','), allVideos.map((file) => file.filename).join(',')], (error, results) => {
+  connection.query('INSERT INTO eventproducts (productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages, allVideos,date,time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)', [productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg.filename,invoiceFiles.map((file) => file.filename).join(','), allImages.map((file) => file.filename).join(','), allVideos.map((file) => file.filename).join(','),date,time], (error, results) => {
     if (error) {
       console.error('Error creating product:', error);
       res.status(500).send('Error creating product');
@@ -184,7 +188,7 @@ router.put('/eventProducts/update/:id', upload.fields([{ name: 'productImg' }, {
   if (allVideos && allVideos.length > 0) {
     product.allVideos = allVideos.map((file) => file.filename);
   }
-  console.log(typeof (product.allImages), typeof (product.allVideos))
+ 
 
   let sql = `UPDATE eventproducts SET productName='${productName}', productPrice='${productPrice}', productDescription='${productDescription}',modelNumber='${modelNumber}', printerColor='${printerColor}', connectorType='${connectorType}', stockQuantity='${stockQuantity}',shelfStartTime='${shelfStartTime}', shelfEndTime='${shelfEndTime}', afterSalesText='${afterSalesText}',  afterSalesInstruction='${afterSalesInstruction}',inventoryText='${inventoryText}', productImg='${productImg.filename}', invoiceFile='${invoiceFiles}', allImages='${allImages.map((file) => file.filename).join(',')}',allVideos='${allVideos.map((file) => file.filename).join(',')}' WHERE id=?`;
   connection.query(sql, [req.params.id],  function(err, result){
@@ -218,7 +222,7 @@ router.delete('/eventProducts/delete/:id', (req, res) => {
     }
 
     const product = rows[0];
-    console.log(product)
+  
 
      // Delete associated main images
     const imgFilePath = `public/eventProductImages/${product.productImg}`;
