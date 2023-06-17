@@ -139,7 +139,7 @@ router.post('/questions/add',(req,res)=>{
         req.body.time,
 
     ]
-    
+    console.log(allQuestions)
     let sql="INSERT INTO questions (email,question,date,time) VALUES (?)";
     connection.query(sql,[allQuestions],(err,result)=>{
         if(err) throw err;

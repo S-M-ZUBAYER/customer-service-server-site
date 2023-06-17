@@ -57,7 +57,6 @@ router.post('/users/add',(req,res)=>{
         req.body.email,
         req.body.designation
     ]
-
     let sql="INSERT INTO users (name, image, phone, country, language, email, designation) VALUES (?)";
 
     connection.query(sql,[user],(err,result)=>{
@@ -94,8 +93,8 @@ router.post('/users/add',(req,res)=>{
     router.put('/users/update/admin/:id', (req, res)=>{
   
     
-      // const isAdmin = true;
-      // console.log(isAdmin)
+      const isAdmin = true;
+      console.log(isAdmin)
       let sql = `UPDATE users SET isAdmin='${true}' WHERE id=?`;
       connection.query(sql, [req.params.id],  function(err, result){
          if (err) throw err;

@@ -103,6 +103,7 @@ router.post('/icons/add',upload.single("image"),(req,res)=>{
     router.put('/categories/add', (req, res)=>{
     
       const categories=req.body;
+      console.log(categories)
       const categoriesString=JSON.stringify(categories)
       let sql = `UPDATE allcategoris SET allcategories='${categoriesString}' WHERE id=1`;
       connection.query(sql,categoriesString,  function(err, result){
