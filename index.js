@@ -45,6 +45,14 @@ app.use("/tht",QandARouter)
 app.use("/tht",iconsRouter)
 
 
+//check the route 
+app.get('/',(req,res)=>{
+  res.send({
+    message:"This is the 1st route"
+  })
+})
+
+
 //Check to Listen the port number 
 app.listen(port,()=>{
 console.log(`THT-Space Electrical Company Ltd Sever Running  on port ${port}`);

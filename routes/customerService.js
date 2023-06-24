@@ -13,7 +13,6 @@ app.use(cors())
 
 router.get('/questions', (req, res) => {
     const email = req.query.email;
-  
     // Perform a query to find data by email
     const query = `SELECT * FROM questions WHERE email = '${email}'`;
   
