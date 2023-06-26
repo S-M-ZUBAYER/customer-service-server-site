@@ -71,7 +71,20 @@ router.get('/categories', (req, res) => {
     });
   });
 
-
+  router.get('/allIcons', (req, res) => {
+    console.log("icons")
+    const query = `SELECT * FROM icons WHERE 1`;
+    
+    connection.query(query, (error, results) => {
+      if(results) {
+        res.json(results);
+      }
+    else {
+        console.error('Error executing query:', error);
+        res.status(500).json({ error: 'An error occurred' });
+      } 
+    });
+  });
     
 
 //create the route and function to add icons according to the category name

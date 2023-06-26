@@ -17,7 +17,7 @@ const connection=require("./config/db")
 
 
 const app=express();
-const port=process.env.PORT || 5000;
+const port=process.env.PORT || 2000;
 // const port=5000;
 
 
