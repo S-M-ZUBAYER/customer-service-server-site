@@ -83,6 +83,7 @@ router.post('/users/add', (req, res) => {
     password = req.body.password,
     designation = req.body.designation
 
+    console.log(name)
 
 bcrypt.hash(password,saltRounds,(err,hash)=>{
   if(err){
