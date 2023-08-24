@@ -11,6 +11,7 @@ const mallProductsRouter=require("./routes/mallProducts");
 const eventProductsRouter=require("./routes/eventProduct");
 const QandARouter=require("./routes/QandA");
 const iconsRouter=require("./routes/addIcons");
+const levelsRouter=require("./routes/level");
 
 //require the config file to connect with database
 const connection=require("./config/db")
@@ -43,6 +44,7 @@ app.use("/tht",mallProductsRouter)
 app.use("/tht",eventProductsRouter)
 app.use("/tht",QandARouter)
 app.use("/tht",iconsRouter)
+app.use("/tht",levelsRouter)
 
 
 //check the route 
