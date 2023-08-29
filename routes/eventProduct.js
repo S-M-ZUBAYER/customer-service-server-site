@@ -57,14 +57,28 @@ router.get('/eventProducts', (req, res) => {
   });
 });
 
+router.get('/eventProducts/:productName', (req, res) => {
+  const productName = req.params.productName;
+
+  const query = 'SELECT * FROM eventproducts WHERE productName = ?';
+
+  connection.query(query, [productName], (error, results) => {
+    if (error) {
+      console.error('Error retrieving products:', error);
+      res.status(500).send('Error retrieving products');
+    } else {
+      res.json(results);
+    }
+  });
+});
 
 
-//create the route and function to add all the information of mall product to store in database 
 
-router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFiles' }, { name: 'images' }, { name: 'videos' }]), (req, res) => {
- 
+
+
+router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFiles' }, { name: 'images' }, { name: 'videos' }, { name: 'instructionsImages' }, { name: 'instructionsVideos' }]), (req, res) => {
+
   // get the data from frontend
-  
   const {
     productName,
     productPrice,
@@ -73,21 +87,25 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
     printerColor,
     connectorType,
     stockQuantity,
+    productImgLink,
+    productImgRemark,
+    relatedImgLink,
+    relatedImgRemark,
     shelfStartTime,
     shelfEndTime,
     afterSalesText,
     afterSalesInstruction,
     inventoryText,
-  date,
-  time
+    date,
+    time
   } = req.body;
 
-  const productImg = req.files['productImg'][0];
- 
+  
+  const productImgFile = req.files['productImg'];
+  const productImg = productImgFile ? productImgFile[0] : null;
   
 
 //create a object for all available data
-
   const product = {
     productName,
     productPrice,
@@ -96,18 +114,24 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
     printerColor,
     connectorType,
     stockQuantity,
+    productImgLink,
+    productImgRemark,
+    relatedImgLink,
+    relatedImgRemark,
     shelfStartTime,
     shelfEndTime,
     afterSalesText,
     afterSalesInstruction,
     inventoryText,
+    productImg: productImg ? productImg.filename : null,
     date,
-    time,
-    productImg: productImg.filename,
+    time
 
   };
   const allImages = req.files['images'];
   const allVideos = req.files['videos'];
+  const allInstructionsImages = req.files['instructionsImages'];
+  const allInstructionsVideos = req.files['instructionsVideos'];
   const invoiceFiles = req.files['invoiceFiles'];
 
   if (invoiceFiles && invoiceFiles.length > 0) {
@@ -121,25 +145,65 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
   if (allVideos && allVideos.length > 0) {
     product.allVideos = allVideos.map((file) => file.filename);
   }
-  console.log(typeof (product.allImages), typeof (product.allVideos),typeof (product.invoiceFiles),date,time)
+  
+  // Check if files are present
+  if (allInstructionsImages && allInstructionsImages.length > 0) {
+    product.allInstructionsImages = allInstructionsImages.map((file) => file.filename);
+  }
 
+  if (allInstructionsVideos && allInstructionsVideos.length > 0) {
+    product.allInstructionsVideos = allInstructionsVideos.map((file) => file.filename);
+  }
+  
 
-  connection.query('INSERT INTO eventproducts (productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages, allVideos,date,time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)', [productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg.filename,invoiceFiles.map((file) => file.filename).join(','), allImages.map((file) => file.filename).join(','), allVideos.map((file) => file.filename).join(','),date,time], (error, results) => {
-    if (error) {
-      console.error('Error creating product:', error);
-      res.status(500).send('Error creating product');
-    } else {
-      console.log('Product created successfully');
-      res.send('Product created successfully');
+  connection.query(
+    'INSERT INTO eventproducts (productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [
+      productName,
+      productPrice,
+      productDescription,
+      modelNumber,
+      printerColor,
+      connectorType,
+      stockQuantity,
+      productImgLink,
+      productImgRemark,
+      relatedImgLink,
+      relatedImgRemark,
+      shelfStartTime,
+      shelfEndTime,
+      afterSalesText,
+      afterSalesInstruction,
+      inventoryText,
+      productImg.filename,
+      invoiceFiles.map((file) => file.filename).join(','),
+      allImages.map((file) => file.filename).join(','),
+      allVideos.map((file) => file.filename).join(','),
+      allInstructionsImages.map((file) => file.filename).join(','),
+      allInstructionsVideos.map((file) => file.filename).join(','),
+      date,
+      time
+    ],
+    (error, results) => {
+      if (error) {
+        console.error('Error creating product:', error);
+        res.status(500).send('Error creating product');
+      } else {
+        console.log('Product created successfully');
+        res.send('Product created successfully');
+      }
     }
-  });
+  );
 });
+
+
 
 
 //create the route and function to update a specific event product information
 
 router.put('/eventProducts/update/:id', upload.fields([{ name: 'productImg' }, { name: 'invoiceFile' }, { name: 'images' }, { name: 'videos' }]), (req, res)=>{
   
+
 
   const {
     productName,
