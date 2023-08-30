@@ -103,7 +103,7 @@ router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 
   
   const productImgFile = req.files['productImg'];
   const productImg = productImgFile ? productImgFile[0] : null;
-  
+  const imgPath='https://grozziie.zjweiting.com:8033/tht/mallProductImages'
 
 //create a object for all available data
   const product = {
@@ -124,6 +124,7 @@ router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 
     afterSalesInstruction,
     inventoryText,
     productImg: productImg ? productImg.filename : null,
+    imgPath,
     date,
     time
 
@@ -157,7 +158,7 @@ router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 
   
 
   connection.query(
-    'INSERT INTO mallproducts (productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO mallproducts (productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity,imgPath, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [
       productName,
       productPrice,
@@ -166,6 +167,7 @@ router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 
       printerColor,
       connectorType,
       stockQuantity,
+      imgPath,
       productImgLink,
       productImgRemark,
       relatedImgLink,
@@ -176,11 +178,12 @@ router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 
       afterSalesInstruction,
       inventoryText,
       productImg.filename,
-      invoiceFiles.map((file) => file.filename).join(','),
-      allImages.map((file) => file.filename).join(','),
-      allVideos.map((file) => file.filename).join(','),
-      allInstructionsImages.map((file) => file.filename).join(','),
-      allInstructionsVideos.map((file) => file.filename).join(','),
+      invoiceFiles && Array.isArray(invoiceFiles) ? invoiceFiles.map((file) => file.filename).join(',') : null,
+      allImages && Array.isArray(allImages) ? allImages.map((file) => file.filename).join(',') : null,
+      allVideos && Array.isArray(allVideos) ? allVideos.map((file) => file.filename).join(',') : null,
+      allInstructionsImages && Array.isArray(allInstructionsImages) ? allInstructionsImages.map((file) => file.filename).join(',') : null,
+     allInstructionsVideos && Array.isArray(allInstructionsVideos) ? allInstructionsVideos.map((file) => file.filename).join(',') : null,
+      
       date,
       time
     ],
@@ -293,7 +296,7 @@ router.delete('/mallProducts/delete/:id', (req, res) => {
     });
 
     // Delete associated images
-    const imageFiles = (product.allImages).split(",") || [];
+    const imageFiles = product.allImages ? product.allImages.split(",") : [];
 
     imageFiles.forEach((filename) => {
       const filePath = `public/mallProductImages/${filename}`;
@@ -304,8 +307,20 @@ router.delete('/mallProducts/delete/:id', (req, res) => {
       });
     });
 
+    // Delete associated images
+    const instructionsImageFiles = product.instructionsImages ? product.instructionsImages.split(",") : [];
+
+    instructionsImageFiles.forEach((filename) => {
+      const filePath = `public/mallProductImages/${filename}`;
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error('Error deleting image file:', err);
+        }
+      });
+    });
+
     // Delete associated videos
-    const videoFiles = (product.allVideos).split(",") || [];
+    const videoFiles = product.allVideos ? (product.allVideos).split(","): [];
     videoFiles.forEach((filename) => {
       const filePath = `public/mallProductImages/${filename}`;
       fs.unlink(filePath, (err) => {
@@ -315,8 +330,18 @@ router.delete('/mallProducts/delete/:id', (req, res) => {
       });
     });
 
+    const instructionsVideoFiles =product.instructionsVideos ? (product.instructionsVideos).split(",") : [];
+    instructionsVideoFiles.forEach((filename) => {
+      const filePath = `public/mallProductImages/${filename}`;
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error('Error deleting video file:', err);
+        }
+      });
+    });
+
     // Delete associated files
-    const invoiceFiles = (product.invoiceFile).split(",") || [];
+    const invoiceFiles = product.invoiceFile ? (product.invoiceFile).split(","): [];
   
     invoiceFiles.forEach((filename) => {
       const filePath = `public/mallProductImages/${filename}`;

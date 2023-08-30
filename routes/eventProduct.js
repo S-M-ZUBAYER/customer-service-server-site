@@ -76,6 +76,7 @@ router.get('/eventProducts/:productName', (req, res) => {
 
 
 
+
 router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFiles' }, { name: 'images' }, { name: 'videos' }, { name: 'instructionsImages' }, { name: 'instructionsVideos' }]), (req, res) => {
 
   // get the data from frontend
@@ -103,7 +104,7 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
   
   const productImgFile = req.files['productImg'];
   const productImg = productImgFile ? productImgFile[0] : null;
-  
+  const imgPath='https://grozziie.zjweiting.com:8033/tht/eventProductImages'
 
 //create a object for all available data
   const product = {
@@ -114,6 +115,7 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
     printerColor,
     connectorType,
     stockQuantity,
+    imgPath,
     productImgLink,
     productImgRemark,
     relatedImgLink,
@@ -157,7 +159,7 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
   
 
   connection.query(
-    'INSERT INTO eventproducts (productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO eventproducts (productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity,imgPath, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [
       productName,
       productPrice,
@@ -166,6 +168,7 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
       printerColor,
       connectorType,
       stockQuantity,
+      imgPath,
       productImgLink,
       productImgRemark,
       relatedImgLink,
@@ -176,11 +179,12 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
       afterSalesInstruction,
       inventoryText,
       productImg.filename,
-      invoiceFiles.map((file) => file.filename).join(','),
-      allImages.map((file) => file.filename).join(','),
-      allVideos.map((file) => file.filename).join(','),
-      allInstructionsImages.map((file) => file.filename).join(','),
-      allInstructionsVideos.map((file) => file.filename).join(','),
+      invoiceFiles && Array.isArray(invoiceFiles) ? invoiceFiles.map((file) => file.filename).join(',') : null,
+      allImages && Array.isArray(allImages) ? allImages.map((file) => file.filename).join(',') : null,
+      allVideos && Array.isArray(allVideos) ? allVideos.map((file) => file.filename).join(',') : null,
+      allInstructionsImages && Array.isArray(allInstructionsImages) ? allInstructionsImages.map((file) => file.filename).join(',') : null,
+     allInstructionsVideos && Array.isArray(allInstructionsVideos) ? allInstructionsVideos.map((file) => file.filename).join(',') : null,
+      
       date,
       time
     ],
@@ -195,7 +199,6 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
     }
   );
 });
-
 
 
 
@@ -269,6 +272,12 @@ router.put('/eventProducts/update/:id', upload.fields([{ name: 'productImg' }, {
 
 //create the route and function to delete a mall product according to the id
 
+
+
+
+
+
+
 router.delete('/eventProducts/delete/:id', (req, res) => {
   const productId = req.params.id;
 
@@ -281,7 +290,7 @@ router.delete('/eventProducts/delete/:id', (req, res) => {
     }
 
     if (rows.length === 0) {
-      res.status(404).send('Mall product not found');
+      res.status(404).send('Event products not found');
       return;
     }
 
@@ -297,7 +306,7 @@ router.delete('/eventProducts/delete/:id', (req, res) => {
     });
 
     // Delete associated images
-    const imageFiles = (product.allImages).split(",") || [];
+    const imageFiles = product.allImages ? product.allImages.split(",") : [];
 
     imageFiles.forEach((filename) => {
       const filePath = `public/eventProductImages/${filename}`;
@@ -308,8 +317,20 @@ router.delete('/eventProducts/delete/:id', (req, res) => {
       });
     });
 
+    // Delete associated images
+    const instructionsImageFiles = product.instructionsImages ? product.instructionsImages.split(",") : [];
+
+    instructionsImageFiles.forEach((filename) => {
+      const filePath = `public/eventProductImages/${filename}`;
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error('Error deleting image file:', err);
+        }
+      });
+    });
+
     // Delete associated videos
-    const videoFiles = (product.allVideos).split(",") || [];
+    const videoFiles = product.allVideos ? (product.allVideos).split(","): [];
     videoFiles.forEach((filename) => {
       const filePath = `public/eventProductImages/${filename}`;
       fs.unlink(filePath, (err) => {
@@ -319,8 +340,18 @@ router.delete('/eventProducts/delete/:id', (req, res) => {
       });
     });
 
+    const instructionsVideoFiles =product.instructionsVideos ? (product.instructionsVideos).split(",") : [];
+    instructionsVideoFiles.forEach((filename) => {
+      const filePath = `public/eventProductImages/${filename}`;
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error('Error deleting video file:', err);
+        }
+      });
+    });
+
     // Delete associated files
-    const invoiceFiles = (product.invoiceFile).split(",") || [];
+    const invoiceFiles = product.invoiceFile ? (product.invoiceFile).split(","): [];
   
     invoiceFiles.forEach((filename) => {
       const filePath = `public/eventProductImages/${filename}`;
@@ -334,17 +365,16 @@ router.delete('/eventProducts/delete/:id', (req, res) => {
     const deleteSql = `DELETE FROM eventproducts WHERE id = ?`;
     connection.query(deleteSql, [productId], function(err, result) {
       if (err) {
-        console.error('Error deleting mall product from database:', err);
-        res.status(500).send('Error deleting mall product from database');
+        console.error('Error deleting Event Product from database:', err);
+        res.status(500).send('Error deleting Event Product from database');
         return;
       }
 
-      console.log('Mall product deleted successfully');
+      console.log('Event Product deleted successfully');
       res.json(result);
     });
   });
 });
-
 
 
 
