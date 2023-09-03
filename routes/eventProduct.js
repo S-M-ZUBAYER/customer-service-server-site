@@ -77,10 +77,11 @@ router.get('/eventProducts/:productName', (req, res) => {
 
 
 
-router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFiles' }, { name: 'images' }, { name: 'videos' }, { name: 'instructionsImages' }, { name: 'instructionsVideos' }]), (req, res) => {
+router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFiles' }, { name: 'images' },{ name: 'colorImages' }, { name: 'videos' }, { name: 'instructionsImages' }, { name: 'instructionsVideos' }]), (req, res) => {
 
   // get the data from frontend
   const {
+    productCountryName,
     productName,
     productPrice,
     productDescription,
@@ -92,6 +93,7 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
     productImgRemark,
     relatedImgLink,
     relatedImgRemark,
+    colorImgRemark,
     shelfStartTime,
     shelfEndTime,
     afterSalesText,
@@ -108,6 +110,7 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
 
 //create a object for all available data
   const product = {
+    productCountryName,
     productName,
     productPrice,
     productDescription,
@@ -120,6 +123,7 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
     productImgRemark,
     relatedImgLink,
     relatedImgRemark,
+    colorImgRemark,
     shelfStartTime,
     shelfEndTime,
     afterSalesText,
@@ -131,6 +135,7 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
 
   };
   const allImages = req.files['images'];
+  const allColorImages = req.files['colorImages'];
   const allVideos = req.files['videos'];
   const allInstructionsImages = req.files['instructionsImages'];
   const allInstructionsVideos = req.files['instructionsVideos'];
@@ -142,6 +147,10 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
   // Check if files are present
   if (allImages && allImages.length > 0) {
     product.allImages = allImages.map((file) => file.filename);
+  }
+
+  if (allColorImages && allColorImages.length > 0) {
+    product.allColorImages = allColorImages.map((file) => file.filename);
   }
 
   if (allVideos && allVideos.length > 0) {
@@ -159,8 +168,9 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
   
 
   connection.query(
-    'INSERT INTO eventproducts (productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity,imgPath, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO eventproducts (productCountryName, productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity,imgPath, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark,colorImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages,allColorImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time) VALUES (?,?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [
+      productCountryName,
       productName,
       productPrice,
       productDescription,
@@ -173,6 +183,7 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
       productImgRemark,
       relatedImgLink,
       relatedImgRemark,
+      colorImgRemark,
       shelfStartTime,
       shelfEndTime,
       afterSalesText,
@@ -181,6 +192,7 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
       productImg.filename,
       invoiceFiles && Array.isArray(invoiceFiles) ? invoiceFiles.map((file) => file.filename).join(',') : null,
       allImages && Array.isArray(allImages) ? allImages.map((file) => file.filename).join(',') : null,
+      allColorImages && Array.isArray(allColorImages) ? allColorImages.map((file) => file.filename).join(',') : null,
       allVideos && Array.isArray(allVideos) ? allVideos.map((file) => file.filename).join(',') : null,
       allInstructionsImages && Array.isArray(allInstructionsImages) ? allInstructionsImages.map((file) => file.filename).join(',') : null,
      allInstructionsVideos && Array.isArray(allInstructionsVideos) ? allInstructionsVideos.map((file) => file.filename).join(',') : null,

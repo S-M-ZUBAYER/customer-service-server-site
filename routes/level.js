@@ -206,9 +206,23 @@ router.post('/allLabelData/add', (req, res) => {
   });
 
 
+  router.delete('/allLabelData/deleteByMyId/:myid', (req, res) => {
+    const myid = req.params.myid;
     
+    const sql = `DELETE FROM alllabeldata WHERE JSON_UNQUOTE(JSON_EXTRACT(labelDataView, '$.myid')) = ?`;
+    
+    connection.query(sql, [myid], function (err, result) {
+      if (err) {
+        console.error('Error deleting records:', err);
+        res.status(500).send('Error deleting records.');
+      } else {
+        console.log(`Successfully deleted records with myid ${myid}`);
+        res.json(result);
+      }
+    });
+  });
+  
    
-    
-
+ 
 
 module.exports=router;

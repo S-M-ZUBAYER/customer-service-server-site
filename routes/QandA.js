@@ -76,10 +76,6 @@ router.post('/QandAnswers/add',(req,res)=>{
 //create the route and function to add delete specific Question answer according to the id
     
 router.delete('/QandAnswers/delete/:id', (req, res)=>{
-
-  
-
-
   const sql = `DELETE FROM questionanswers WHERE id=?`;
   connection.query(sql, [req.params.id],  function(err, result){
      if (err) throw err;

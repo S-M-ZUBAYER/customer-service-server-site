@@ -89,24 +89,24 @@ router.get('/categories', (req, res) => {
 
 //create the route and function to add icons according to the category name
 
-router.post('/icons/add',upload.single("image"),(req,res)=>{
-   
-    const image=req.file.filename;
-    const userEmail=req.body.email;
-    const categoryName=req.body.categoryName;
-    allInfo=[image,userEmail,categoryName]
-    
-    const spl="INSERT INTO icons (icon,email,categoryName) VALUES (?)";
+router.post('/icons/add', upload.array("images"), (req, res) => {
+  const images = req.files.map((file) => file.filename);
+  const userEmail = req.body.email;
+  const categoryName = req.body.categoryName;
 
-    connection.query(spl,[allInfo],(err,result)=>{
-        if(err) {
-            console.log(err)
-           return res.json({message:"error"}); 
-        }
-        return res.json({status:"success"})
-    })
+  const insertData = images.map((image) => [image, userEmail, categoryName]);
 
-})
+  const sql = "INSERT INTO icons (icon, email, categoryName) VALUES ?";
+  
+  connection.query(sql, [insertData], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.json({ message: "error" });
+    }
+    return res.json({ status: "success" });
+  });
+});
+
 
    
      
