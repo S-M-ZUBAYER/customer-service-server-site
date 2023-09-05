@@ -86,15 +86,54 @@ router.get('/categories', (req, res) => {
     });
   });
     
-
+  router.get('/icons/:categoryName', (req, res) => {
+    const categoryName = req.params.categoryName; // Correctly access the categoryName parameter
+    console.log(categoryName);
+    const query = 'SELECT * FROM icons WHERE categoryName = ?';
+  
+    connection.query(query, [categoryName], (error, results) => {
+      if (error) {
+        console.error('Error executing query:', error);
+        res.status(500).json({ error: 'An error occurred' });
+      } else {
+        res.json(results);
+      }
+    });
+  });
 //create the route and function to add icons according to the category name
 
+// router.post('/icons/add', upload.array("images"), (req, res) => {
+//   const images = req.files.map((file) => file.filename);
+//   const userEmail = req.body.email;
+//   const categoryName = req.body.categoryName;
+
+//   const insertData = images.map((image) => [image, userEmail, categoryName]);
+
+//   const sql = "INSERT INTO icons (icon, email, categoryName) VALUES ?";
+  
+//   connection.query(sql, [insertData], (err, result) => {
+//     if (err) {
+//       console.error(err);
+//       return res.json({ message: "error" });
+//     }
+//     return res.json({ status: "success" });
+//   });
+// });
+
 router.post('/icons/add', upload.array("images"), (req, res) => {
-  const images = req.files.map((file) => file.filename);
+  const images = req.files.map((file) => {
+    // Generate a unique filename by appending a timestamp
+    const timestamp = Date.now();
+    const uniqueFilename = `${timestamp}_${file.originalname}`;
+    return uniqueFilename;
+  });
+  
   const userEmail = req.body.email;
   const categoryName = req.body.categoryName;
+ 
 
   const insertData = images.map((image) => [image, userEmail, categoryName]);
+console.log(insertData)
 
   const sql = "INSERT INTO icons (icon, email, categoryName) VALUES ?";
   
@@ -106,8 +145,6 @@ router.post('/icons/add', upload.array("images"), (req, res) => {
     return res.json({ status: "success" });
   });
 });
-
-
    
      
     

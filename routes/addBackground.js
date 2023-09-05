@@ -91,15 +91,42 @@ router.get('/BackgroundCategories', (req, res) => {
 
 //create the route and function to add icons according to the category name
 
+// router.post('/backgroundImgs/add', upload.array("images"), (req, res) => {
+//     console.log("connect")
+//   const images = req.files.map((file) => file.filename);
+//   const userEmail = req.body.email;
+//   const categoryName = req.body.categoryName;
+// console.log(images,userEmail,categoryName)
+//   const insertData = images.map((image) => [image, userEmail, categoryName]);
+
+//   const sql = "INSERT INTO backgroundImgs (image, userEmail, categoryName) VALUES ?";
+  
+//   connection.query(sql, [insertData], (err, result) => {
+//     if (err) {
+//       console.error(err);
+//       return res.json({ message: "error" });
+//     }
+//     return res.json({ status: "success" });
+//   });
+// });
+
 router.post('/backgroundImgs/add', upload.array("images"), (req, res) => {
-    console.log("connect")
-  const images = req.files.map((file) => file.filename);
+  console.log("connect");
+  const images = req.files.map((file) => {
+    // Generate a unique filename by appending a timestamp
+    const timestamp = Date.now();
+    const uniqueFilename = `${timestamp}_${file.originalname}`;
+    return uniqueFilename;
+  });
+  
   const userEmail = req.body.email;
   const categoryName = req.body.categoryName;
-console.log(images,userEmail,categoryName)
-  const insertData = images.map((image) => [image, userEmail, categoryName]);
+  console.log(images);
 
-  const sql = "INSERT INTO backgroundImgs (image, userEmail, categoryName) VALUES ?";
+  const insertData = images.map((image) => [image, userEmail, categoryName]);
+  console.log([insertData]);
+
+  // const sql = "INSERT INTO backgroundImgs (image, userEmail, categoryName) VALUES ?";
   
   connection.query(sql, [insertData], (err, result) => {
     if (err) {
@@ -109,6 +136,8 @@ console.log(images,userEmail,categoryName)
     return res.json({ status: "success" });
   });
 });
+
+
 
 
    
