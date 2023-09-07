@@ -9,6 +9,7 @@ const usersRouter=require("./routes/users");
 const questionsRouter=require("./routes/customerService");
 const mallProductsRouter=require("./routes/mallProducts");
 const eventProductsRouter=require("./routes/eventProduct");
+const allColorImgRoute=require("./routes/productColorImgs");
 const QandARouter=require("./routes/QandA");
 const iconsRouter=require("./routes/addIcons");
 const backgroundImgsRouter=require("./routes/addBackground");
@@ -43,6 +44,7 @@ app.use("/tht",usersRouter)
 app.use("/tht",questionsRouter)
 app.use("/tht",mallProductsRouter)
 app.use("/tht",eventProductsRouter)
+app.use("/tht",allColorImgRoute)
 app.use("/tht",QandARouter)
 app.use("/tht",iconsRouter)
 app.use("/tht",backgroundImgsRouter)

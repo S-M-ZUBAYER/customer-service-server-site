@@ -76,7 +76,7 @@ router.get('/mallProducts/:productName', (req, res) => {
 
 //create the route and function to add all the information of mall product to store in database 
 
-router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFiles' }, { name: 'images' },{ name: 'colorImages' }, { name: 'videos' }, { name: 'instructionsImages' }, { name: 'instructionsVideos' }]), (req, res) => {
+router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFiles' }, { name: 'images' },{ name: 'descriptionImages' }, { name: 'videos' }, { name: 'instructionsImages' }, { name: 'instructionsVideos' }]), (req, res) => {
 console.log(req.body)
   // get the data from frontend
   const {
@@ -92,7 +92,7 @@ console.log(req.body)
     productImgRemark,
     relatedImgLink,
     relatedImgRemark,
-    colorImgRemark,
+    descriptionImgRemark,
     shelfStartTime,
     shelfEndTime,
     afterSalesText,
@@ -122,7 +122,7 @@ console.log(req.body)
     productImgRemark,
     relatedImgLink,
     relatedImgRemark,
-    colorImgRemark,
+    descriptionImgRemark,
     shelfStartTime,
     shelfEndTime,
     afterSalesText,
@@ -136,7 +136,7 @@ console.log(req.body)
   };
   console.log(product,"country")
   const allImages = req.files['images'];
-  const allColorImages = req.files['colorImages'];
+  const allDescriptionImages = req.files['descriptionImages'];
   const allVideos = req.files['videos'];
   const allInstructionsImages = req.files['instructionsImages'];
   const allInstructionsVideos = req.files['instructionsVideos'];
@@ -149,8 +149,8 @@ console.log(req.body)
   if (allImages && allImages.length > 0) {
     product.allImages = allImages.map((file) => file.filename);
   }
-  if (allColorImages && allColorImages.length > 0) {
-    product.allColorImages = allColorImages.map((file) => file.filename);
+  if (allDescriptionImages && allDescriptionImages.length > 0) {
+    product.allDescriptionImages = allDescriptionImages.map((file) => file.filename);
   }
 
   if (allVideos && allVideos.length > 0) {
@@ -168,7 +168,7 @@ console.log(req.body)
   
 
   connection.query(
-    'INSERT INTO mallproducts (productCountryName, productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity,imgPath, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark,colorImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages,allColorImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time) VALUES (?,?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO mallproducts (productCountryName, productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity,imgPath, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark,descriptionImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages,allDescriptionImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time) VALUES (?,?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [
       productCountryName,
       productName,
@@ -183,7 +183,7 @@ console.log(req.body)
       productImgRemark,
       relatedImgLink,
       relatedImgRemark,
-      colorImgRemark,
+      descriptionImgRemark,
       shelfStartTime,
       shelfEndTime,
       afterSalesText,
@@ -192,7 +192,7 @@ console.log(req.body)
       productImg.filename,
       invoiceFiles && Array.isArray(invoiceFiles) ? invoiceFiles.map((file) => file.filename).join(',') : null,
       allImages && Array.isArray(allImages) ? allImages.map((file) => file.filename).join(',') : null,
-      allColorImages && Array.isArray(allColorImages) ? allColorImages.map((file) => file.filename).join(',') : null,
+      allDescriptionImages && Array.isArray(allDescriptionImages) ? allDescriptionImages.map((file) => file.filename).join(',') : null,
       allVideos && Array.isArray(allVideos) ? allVideos.map((file) => file.filename).join(',') : null,
       allInstructionsImages && Array.isArray(allInstructionsImages) ? allInstructionsImages.map((file) => file.filename).join(',') : null,
      allInstructionsVideos && Array.isArray(allInstructionsVideos) ? allInstructionsVideos.map((file) => file.filename).join(',') : null,
@@ -312,6 +312,17 @@ router.delete('/mallProducts/delete/:id', (req, res) => {
     const imageFiles = product.allImages ? product.allImages.split(",") : [];
 
     imageFiles.forEach((filename) => {
+      const filePath = `public/mallProductImages/${filename}`;
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error('Error deleting image file:', err);
+        }
+      });
+    });
+    // Delete associated images
+    const descriptionImageFiles = product.allDescriptionImages ? product.allDescriptionImages.split(",") : [];
+
+    descriptionImageFiles.forEach((filename) => {
       const filePath = `public/mallProductImages/${filename}`;
       fs.unlink(filePath, (err) => {
         if (err) {
