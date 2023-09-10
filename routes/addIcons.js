@@ -1,40 +1,31 @@
-const express =require("express");
+
+const express = require("express");
 const connection = require("../config/db");
-const router=express.Router();
+const router = express.Router();
 const cors = require('cors');
-
-//Require multer for upload different files
-const multer =require("multer")
-
-//Require path to view file file according to the path
-const path= require("path")
-
-//Require fs to unlink the file at the time to update and delete
+const multer = require("multer");
+const path = require("path");
 const fs = require('fs');
 
-const app=express();
+const app = express();
 app.use(cors());
 
+router.use(express.static('public'));
 
-// Set the specific folder to show the file
-router.use(express.static('public'))
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/images');
+  },
+  filename: (req, file, cb) => {
+    const timestamp = Date.now();
+    const uniqueFilename = `${timestamp}_${file.originalname}`;
+    cb(null, uniqueFilename);
+  }
+});
 
-//create the structure to upload the file with specific name
-const storage=multer.diskStorage({
-    destination: (req,file,cb)=>{
-        cb(null,'public/images')
-    },
-    filename:(req,file,cb)=>{
-        cb(null,file.fieldname+"_"+Date.now()+path.extname(file.originalname) )
-    }
-})
-
-
-//declare the multer
-const upload=multer({
-    storage:storage
-})
-
+const upload = multer({
+  storage: storage
+});
 
 //create the route and function to load all the icons according to the category name
 
@@ -100,40 +91,29 @@ router.get('/categories', (req, res) => {
       }
     });
   });
-//create the route and function to add icons according to the category name
 
-// router.post('/icons/add', upload.array("images"), (req, res) => {
-//   const images = req.files.map((file) => file.filename);
-//   const userEmail = req.body.email;
-//   const categoryName = req.body.categoryName;
 
-//   const insertData = images.map((image) => [image, userEmail, categoryName]);
+router.get('/iconCategories', (req, res) => {
 
-//   const sql = "INSERT INTO icons (icon, email, categoryName) VALUES ?";
-  
-//   connection.query(sql, [insertData], (err, result) => {
-//     if (err) {
-//       console.error(err);
-//       return res.json({ message: "error" });
-//     }
-//     return res.json({ status: "success" });
-//   });
-// });
+  const query = `SELECT * FROM allcategorisList WHERE 1`;
+
+  connection.query(query, (error, results) => {
+    if (error) {
+      console.error('Error executing query:', error);
+      res.status(500).json({ error: 'An error occurred' });
+    } else {
+      res.json(results);
+    }
+  });
+});
+
 
 router.post('/icons/add', upload.array("images"), (req, res) => {
-  const images = req.files.map((file) => {
-    // Generate a unique filename by appending a timestamp
-    const timestamp = Date.now();
-    const uniqueFilename = `${timestamp}_${file.originalname}`;
-    return uniqueFilename;
-  });
-  
-  const userEmail = req.body.email;
+  const images = req.files.map((file) => file.filename);
+  const userEmail = req.body.email; // Corrected from email to userEmail
   const categoryName = req.body.categoryName;
- 
 
   const insertData = images.map((image) => [image, userEmail, categoryName]);
-console.log(insertData)
 
   const sql = "INSERT INTO icons (icon, email, categoryName) VALUES ?";
   
@@ -145,25 +125,23 @@ console.log(insertData)
     return res.json({ status: "success" });
   });
 });
-   
-     
-    
-//create the route and function to add new category name
 
-    router.put('/categories/add', (req, res)=>{
+
+    router.post('/iconCategories/add', (req, res) => {
+      const { categoryName } = req.body;
+    console.log(categoryName)
+      const sql = 'INSERT INTO allcategorisList (allIconsCategoris) VALUES (?)';
     
-      const categories=req.body;
-      console.log(categories)
-      const categoriesString=JSON.stringify(categories)
-      let sql = `UPDATE allcategoris SET allcategories='${categoriesString}' WHERE id=1`;
-      connection.query(sql,categoriesString,  function(err, result){
-         if (err) throw err;
-         console.log("successfully updated", result);
-         res.json(result);;
+      connection.query(sql, [categoryName], (err, result) => {
+        if (err) {
+          console.error('Error adding category to the database:', err);
+          res.status(500).json({ message: 'Error adding category' });
+          return;
+        }
+        console.log('Category added to the database');
+        res.status(201).json({ message: 'Category added successfully' });
       });
     });
-
-
 
 //create the route and function to delete specific icon according to the id
 

@@ -101,6 +101,31 @@ router.post('/colorImg/add', upload.single('colorImage'), (req, res) => {
     );
   });
   
+
+  // Add a new route handler for GET requests based on the model number
+router.get('/colorImg/:modelNumber', (req, res) => {
+  const { modelNumber } = req.params;
+
+  // Query the database to retrieve color images based on the model number
+  connection.query(
+      'SELECT * FROM allcolorimages WHERE modelNumber = ?',
+      [modelNumber],
+      (error, results) => {
+          if (error) {
+              console.error('Error retrieving color images:', error);
+              res.status(500).json({ status: 'error', message: 'Error retrieving color images' });
+          } else {
+              // Check if any color images were found
+              if (results.length === 0) {
+                  res.status(404).json({ status: 'not found', message: 'Color images not found for the given model number' });
+              } else {
+                  res.status(200).json({ status: 'success', data: results });
+              }
+          }
+      }
+  );
+});
+
   
   router.delete('/colorImgs/delete/:id', (req, res) => {
     const colorId = req.params.id;
@@ -134,6 +159,52 @@ router.post('/colorImg/add', upload.single('colorImage'), (req, res) => {
         }
   
         const deleteSql = `DELETE FROM allcolorimages WHERE productId = ?`;
+        connection.query(deleteSql, [colorId], function(err, result) {
+          if (err) {
+            console.error('Error deleting icon from database:', err);
+            res.status(500).send('Error deleting icon from database');
+            return;
+          }
+  
+          console.log('Icon deleted successfully');
+          res.json(result);
+        });
+      });
+    });
+  });
+
+  router.delete('/colorInfo/delete/:id', (req, res) => {
+    const colorId = req.params.id;
+    console.log(colorId)
+    
+    const sql = `SELECT * FROM allcolorimages WHERE id = ?`;
+    connection.query(sql, [colorId], function(err, rows) {
+      if (err) {
+        console.error('Error retrieving colorImg:', err);
+        res.status(500).send('Error retrieving colorImg');
+        return;
+      }
+  
+      if (rows.length === 0) {
+        res.status(404).send('colorImg not found');
+        return;
+      }
+  
+      const icon = rows[0];
+    
+  //start from here to unlink and delete the file from the folder
+  
+      const filePath = `public/colorImages/${icon.colorImage}`;
+   
+  
+      fs.unlink(filePath, function(err) {
+        if (err) {
+          console.error('Error deleting file:', err);
+          res.status(500).send('Error deleting file');
+          return;
+        }
+  
+        const deleteSql = `DELETE FROM allcolorimages WHERE id = ?`;
         connection.query(deleteSql, [colorId], function(err, result) {
           if (err) {
             console.error('Error deleting icon from database:', err);
