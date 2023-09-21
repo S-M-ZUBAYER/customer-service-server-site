@@ -89,10 +89,12 @@ router.post('/backgroundImgs/add', upload.array("images"), (req, res) => {
   const images = req.files.map((file) => file.filename);
   const userEmail = req.body.email;
   const categoryName = req.body.categoryName;
+  const height = req.body.height;
+  const width = req.body.width;
 
-  const insertData = images.map((image) => [image, userEmail, categoryName]);
+  const insertData = images.map((image) => [image, userEmail, categoryName,height,width]);
 
-  const sql = "INSERT INTO backgroundImgs (image, userEmail, categoryName) VALUES ?";
+  const sql = "INSERT INTO backgroundImgs (image, userEmail, categoryName,height,width) VALUES ?";
   
   connection.query(sql, [insertData], (err, result) => {
     if (err) {
