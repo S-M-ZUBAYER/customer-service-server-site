@@ -14,6 +14,8 @@ const QandARouter=require("./routes/QandA");
 const iconsRouter=require("./routes/addIcons");
 const backgroundImgsRouter=require("./routes/addBackground");
 const levelsRouter=require("./routes/level");
+const showingVideoRouter=require("./routes/showingVideo");
+const warehouseAndCitiesRouter=require("./routes/addWarehouseAndCities");
 
 //require the config file to connect with database
 const connection=require("./config/db")
@@ -49,6 +51,8 @@ app.use("/tht",QandARouter)
 app.use("/tht",iconsRouter)
 app.use("/tht",backgroundImgsRouter)
 app.use("/tht",levelsRouter)
+app.use("/tht",showingVideoRouter)
+app.use("/tht",warehouseAndCitiesRouter)
 
 
 //check the route 

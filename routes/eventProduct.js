@@ -5,6 +5,8 @@ const connection = require("../config/db")
 const router = express.Router()
 const cors = require("cors");
 const fs = require('fs');
+const app = express();
+app.use(cors());
 
 
 // import multer from "multer" to upload file in backend
@@ -31,16 +33,17 @@ const storage = multer.diskStorage({
     cb(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname))
   }
 })
-
+const bodyParser = require('body-parser');
+app.use(bodyParser.json({ limit: '100mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '100mb' }));
 
 //declare the multer
 const upload = multer({
-  storage: storage
-})
+  storage: storage,
+  limits: { fileSize: 100 * 1024 * 1024 } // Adjust the limit to handle up to 70MB
+});
 
 
-const app = express();
-app.use(cors());
 
 
 
