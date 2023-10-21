@@ -16,6 +16,7 @@ const backgroundImgsRouter=require("./routes/addBackground");
 const levelsRouter=require("./routes/level");
 const showingVideoRouter=require("./routes/showingVideo");
 const warehouseAndCitiesRouter=require("./routes/addWarehouseAndCities");
+const modelNoHightWidthRouter=require("./routes/addModelNoHightWidth");
 
 //require the config file to connect with database
 const connection=require("./config/db")
@@ -53,6 +54,7 @@ app.use("/tht",backgroundImgsRouter)
 app.use("/tht",levelsRouter)
 app.use("/tht",showingVideoRouter)
 app.use("/tht",warehouseAndCitiesRouter)
+app.use("/tht",modelNoHightWidthRouter)
 
 
 //check the route 

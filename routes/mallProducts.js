@@ -111,7 +111,6 @@ console.log(req.body)
   const productImg = productImgFile ? productImgFile[0] : null;
   const imgPath='https://grozziie.zjweiting.com:8033/tht/mallProductImages'
 
-  console.log(productCountryName,"country")
 //create a object for all available data
   const product = {
     productCountryName,
@@ -138,13 +137,15 @@ console.log(req.body)
     time
 
   };
-  console.log(product,"country")
+ 
   const allImages = req.files['images'];
   const allDescriptionImages = req.files['descriptionImages'];
   const allVideos = req.files['videos'];
   const allInstructionsImages = req.files['instructionsImages'];
   const allInstructionsVideos = req.files['instructionsVideos'];
   const invoiceFiles = req.files['invoiceFiles'];
+
+  console.log(productImg,allImages,allDescriptionImages,allInstructionsImages,"country")
 
   if (invoiceFiles && invoiceFiles.length > 0) {
     product.invoiceFiles = invoiceFiles.map((file) => file.filename);
