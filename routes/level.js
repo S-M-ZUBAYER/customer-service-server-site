@@ -460,6 +460,7 @@ router.get('/widgetContainers/get/', (req, res) => {
 });
 
 
+
 // Get a widgetContainers by its ID 
 
 router.get('/widgetContainers/getMain/:id', (req, res) => {
@@ -477,6 +478,29 @@ router.get('/widgetContainers/getMain/:id', (req, res) => {
     }
   });
 });
+
+
+
+
+router.delete('/widgetContainers/multiDelete/:mainId', (req, res) => {
+  const mainId = req.params.mainId;
+
+  const sql = `DELETE FROM widgetcontainertable WHERE mainContainerId = ?`;
+
+  connection.query(sql, [mainId], function (err, results) {
+    if (err) {
+      console.error("Error deleting data:", err);
+      res.status(500).json({ error: "An error occurred while deleting data." });
+    } else {
+      console.log("Successfully deleted data", results);
+      res.json(results);
+    }
+  });
+});
+
+
+
+
 
 // end here the Sultans code ............
  
