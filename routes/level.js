@@ -233,11 +233,7 @@ router.post('/allLabelData/add', (req, res) => {
 
 
 
-// from here the Sultans code ............
-
-
-
-// Create a new MainContainer
+//new  code for maincontainers table and  widgetcontainertable   
 
 
 
@@ -255,7 +251,7 @@ router.post('/mainContainers/add', (req, res) => {
   // Use placeholders for the BLOB data and prepare the SQL statement
   let sql = `INSERT INTO maincontainertable (containerName, containerHeight, containerWidth, containerImageBitmapData, subCategories) VALUES (?, ?, ?, ?, ?)`;
 
-  connection.query(sql, [dataToStore.containerName, dataToStore.containerHeight, dataToStore.containerWidth, dataToStore.containerImageBitmapData, dataToStore.subCategories], function(err, result) {
+  connection.query(sql, [dataToStore.containerName, dataToStore.containerHeight, dataToStore.containerWidth, JSON.stringify(dataToStore.containerImageBitmapData), dataToStore.subCategories], function(err, result) {
     if (err) {
       console.error("Error inserting data:", err);
       res.status(500).json({ error: "An error occurred while inserting data." });
@@ -302,7 +298,7 @@ router.put('/mainContainers/update/:id', (req, res) => {
 
 
 
-router.get('/mainContainers/get/:subCategories', (req, res) => {
+router.get('/mainContainers/:subCategories', (req, res) => {
   const subCategories = req.params.subCategories;
 
   let sql = `SELECT id,containerName,containerHeight,containerWidth,convert(containerImageBitmapData using utf8) as containerImageBitmapData FROM maincontainertable WHERE subCategories = ?`;
@@ -328,10 +324,31 @@ router.get('/mainContainers/get/:subCategories', (req, res) => {
 
 
 
+// Get a MainContainer by its mainContainersID 
+
+router.get('/mainContainers/get/main/:id', (req, res) => {
+  const id = req.params.id;
+  console.log(id,"skjdf")
+
+  let sql = `SELECT id, containerName, containerHeight, containerWidth, convert(containerImageBitmapData using utf8) AS containerImageBitmapData, subCategories FROM maincontainertable WHERE id = ?`;
+
+  connection.query(sql, [id], function(err, results) {
+    if (err) {
+      console.error("Error fetching data:", err);
+      res.status(500).json({ error: "An error occurred while fetching data." });
+    } else {
+      if (results.length > 0) {
+        res.json(results);
+      } else {
+        res.status(404).json({ error: "No data found for the given subcategory." });
+      }
+    }
+  });
+});
 
 
 router.get('/mainContainers', (req, res) => {
-  let sql = `SELECT * FROM maincontainertable`;
+  let sql = `SELECT id, containerName, containerHeight, containerWidth, convert(containerImageBitmapData using utf8) AS containerImageBitmapData, subCategories FROM maincontainertable`;
 
   connection.query(sql, function(err, results) {
     if (err) {
@@ -344,9 +361,7 @@ router.get('/mainContainers', (req, res) => {
   });
 });
 
-//zubayer
 
-// Delete a MainContainer with Widget by mainContainer ID
 
 router.delete('/mainContainers/delete/:id', (req, res) => {
   const mainContainersId = req.params.id;
@@ -385,9 +400,9 @@ router.post('/widgetContainers/add/', (req, res) => {
     isBold:isBold || 0,
     isUnderline:isUnderline || 0,
     isItalic:isItalic || 0,
-    fontSize:fontSize || null,
+    fontSize:fontSize,
     alignment:alignment || "left",
-    rotation:rotation || null,
+    rotation:rotation,
     prefix:prefix || null,
     suffix: suffix || null,
     selectedEmojiIcons: selectedEmojiIcons || {},
@@ -460,14 +475,14 @@ router.get('/widgetContainers/get/', (req, res) => {
 });
 
 
-
 // Get a widgetContainers by its ID 
 
 router.get('/widgetContainers/getMain/:id', (req, res) => {
   const mainContainerId = req.params.id;
 
-  let sql = `SELECT * FROM widgetcontainertable WHERE mainContainerId = ?`;
-
+  //let sql = `SELECT * FROM widgetcontainertable WHERE mainContainerId = ?`;//convert(containerImageBitmapData using utf8) as containerImageBitmapData
+  let sql = `SELECT id,mainContainerId, type, contentData, offsetDx, offsetDy, isBold, isUnderline,  isItalic, fontSize, alignment, rotation, widthSize,  height,  prefix, suffix, convert(selectedEmojiIcons using utf8) as selectedEmojiIcons, isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth,
+  isDottedLine, rowCount, columnCount FROM widgetcontainertable WHERE mainContainerId = ?`;
   connection.query(sql, [mainContainerId], function(err, results) {
     if (err) {
       console.error("Error fetching data:", err);
@@ -479,11 +494,11 @@ router.get('/widgetContainers/getMain/:id', (req, res) => {
   });
 });
 
-
-
+// end here the Sultans code ............
 
 router.delete('/widgetContainers/multiDelete/:mainId', (req, res) => {
   const mainId = req.params.mainId;
+  console.log(mainId)
 
   const sql = `DELETE FROM widgetcontainertable WHERE mainContainerId = ?`;
 
@@ -497,12 +512,6 @@ router.delete('/widgetContainers/multiDelete/:mainId', (req, res) => {
     }
   });
 });
-
-
-
-
-
-// end here the Sultans code ............
  
 
 module.exports=router;
