@@ -49,6 +49,7 @@ router.post('/colorImg/add', upload.single('colorImage'), (req, res) => {
         productId,
         modelNumber,
         colorName,
+        modelImage,
         typeName,
         productPrice,
         stockQuantity,
@@ -68,6 +69,7 @@ router.post('/colorImg/add', upload.single('colorImage'), (req, res) => {
         productId,
         modelNumber,
         colorName,
+        modelImage,
         typeName,
         productPrice,
         stockQuantity,
@@ -77,17 +79,18 @@ router.post('/colorImg/add', upload.single('colorImage'), (req, res) => {
   
     // Insert the data into the database
     connection.query(
-      'INSERT INTO allcolorimages (productId,modelNumber,colorName,typeName,colorProductPrice,colorProductQuantity,colorProductDescription,colorImage,imgPath) VALUES (?,?,?,?,?,?, ?, ?, ?)',
+      'INSERT INTO allcolorimages (productId,modelNumber,colorName,modelImage,typeName,colorProductPrice,colorProductQuantity,colorProductDescription,colorImage,imgPath) VALUES (?,?,?,?,?,?, ?, ?,?, ?)',
       [
         productId,
         modelNumber,
         colorName,
+        modelImage,
         typeName,
         productPrice,
         stockQuantity,
         productDescription,
         colorImage.filename,
-        'https://grozziie.zjweiting.com:8033/tht/colorImages'
+        'https://grozziieget.zjweiting.com:8033/tht/colorImages'
       ],
       (error, results) => {
         if (error) {
@@ -125,6 +128,55 @@ router.get('/colorImg/:modelNumber', (req, res) => {
       }
   );
 });
+
+// router.get('/colorImg/productColor/:productId', (req, res) => {
+//   const { productId } = req.params;
+
+//   // Query the database to retrieve color images based on the model number
+//   connection.query(
+//       'SELECT * FROM allcolorimages WHERE productId = ?',
+//       [productId],
+//       (error, results) => {
+//           if (error) {
+//               console.error('Error retrieving color images:', error);
+//               res.status(500).json({ status: 'error', message: 'Error retrieving color images' });
+//           } else {
+//               // Check if any color images were found
+//               if (results.length === 0) {
+//                   res.status(404).json({ status: 'not found', message: 'Color images not found for the given model number' });
+//               } else {
+//                   res.status(200).json({ status: 'success', data: results });
+//               }
+//           }
+//       }
+//   );
+// });
+
+
+router.get('/colorImg/productColor/:productId/:imageCategory', (req, res) => {
+  const { productId, imageCategory } = req.params;
+  
+  console.log(productId, imageCategory)
+  // Query the database to retrieve color images based on productId and ImageCategory
+  connection.query(
+    'SELECT * FROM allcolorimages WHERE productId = ? AND modelImage = ?',
+    [productId, imageCategory],
+    (error, results) => {
+      if (error) {
+        console.error('Error retrieving color images:', error);
+        res.status(500).json({ status: 'error', message: 'Error retrieving color images' });
+      } else {
+        // Check if any color images were found
+        if (results.length === 0) {
+          res.status(404).json({ status: 'not found', message: 'Color images not found for the given product and image category' });
+        } else {
+          res.status(200).json({ status: 'success', data: results });
+        }
+      }
+    }
+  );
+});
+
 
   
   router.delete('/colorImgs/delete/:id', (req, res) => {

@@ -237,30 +237,32 @@ router.post('/allLabelData/add', (req, res) => {
 
 
 
+
+
 router.post('/mainContainers/add', (req, res) => {
   const { containerName, containerHeight, containerWidth, containerImageBitmapData, subCategories } = req.body;
-
-  const dataToStore = {
-    containerName,
-    containerHeight, // Default to an empty object if not provided
-    containerWidth,
-    containerImageBitmapData, // No default needed since it's binary data
-    subCategories // Default to an empty object if not provided
-  };
-
-  // Use placeholders for the BLOB data and prepare the SQL statement
-  let sql = `INSERT INTO maincontainertable (containerName, containerHeight, containerWidth, containerImageBitmapData, subCategories) VALUES (?, ?, ?, ?, ?)`;
-
-  connection.query(sql, [dataToStore.containerName, dataToStore.containerHeight, dataToStore.containerWidth, JSON.stringify(dataToStore.containerImageBitmapData), dataToStore.subCategories], function(err, result) {
-    if (err) {
-      console.error("Error inserting data:", err);
-      res.status(500).json({ error: "An error occurred while inserting data." });
-    } else {
-      console.log("Successfully inserted data", result);
-      res.json(result);
-    }
+  
+    const dataToStore = {
+      containerName,
+      containerHeight, // Default to null if not provided
+      containerWidth, // Default to null if not provided
+      containerImageBitmapData: containerImageBitmapData || null, // Default to null if not provided
+      subCategories, // Default to null if not provided
+    };
+  
+    let sql = `INSERT INTO maincontainertable (containerName, containerHeight, containerWidth, containerImageBitmapData, subCategories) VALUES (?, ?, ?, ?, ?)`;
+  
+    connection.query(sql, [dataToStore.containerName, dataToStore.containerHeight, dataToStore.containerWidth, JSON.stringify(dataToStore.containerImageBitmapData), dataToStore.subCategories], function(err, result) {
+      if (err) {
+        console.error("Error inserting data:", err);
+        res.status(500).json({ error: "An error occurred while inserting data." });
+      } else {
+        console.log("Successfully inserted data", result);
+        res.json(result);
+      }
+    });
   });
-});
+
 
 
 
@@ -325,7 +327,6 @@ router.get('/mainContainers/:subCategories', (req, res) => {
 
 
 // Get a MainContainer by its mainContainersID 
-
 router.get('/mainContainers/get/main/:id', (req, res) => {
   const id = req.params.id;
   console.log(id,"skjdf")
@@ -345,7 +346,6 @@ router.get('/mainContainers/get/main/:id', (req, res) => {
     }
   });
 });
-
 
 router.get('/mainContainers', (req, res) => {
   let sql = `SELECT id, containerName, containerHeight, containerWidth, convert(containerImageBitmapData using utf8) AS containerImageBitmapData, subCategories FROM maincontainertable`;
@@ -386,7 +386,7 @@ router.delete('/mainContainers/delete/:id', (req, res) => {
 // Create a new WidgetContainer
 
 router.post('/widgetContainers/add/', (req, res) => {
-  const { mainContainerId, type, contentData, offsetDx, offsetDy, widthSize, height, isBold, isUnderline, isItalic, fontSize, alignment, rotation,  prefix, suffix, selectedEmojiIcons, isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth, isDottedLine, rowCount, columnCount } = req.body;
+  const { mainContainerId, type, contentData, offsetDx, offsetDy, widthSize, height, selectTimeTextScanInt, isBold, isUnderline, isItalic, fontSize, alignment, rotation,  prefix, suffix, selectedEmojiIcons, isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth, isDottedLine, rowCount, columnCount } = req.body;
 
   const dataToStore = {
     mainContainerId,
@@ -397,6 +397,7 @@ router.post('/widgetContainers/add/', (req, res) => {
     widthSize,
 
     height:height || null,
+    selectTimeTextScanInt:selectTimeTextScanInt || null,
     isBold:isBold || 0,
     isUnderline:isUnderline || 0,
     isItalic:isItalic || 0,
@@ -416,8 +417,8 @@ router.post('/widgetContainers/add/', (req, res) => {
     columnCount:columnCount| null
   };
 
-  let sql = `INSERT INTO widgetcontainertable (mainContainerId, type, contentData, offsetDx, offsetDy,widthSize,  height, isBold, isUnderline, isItalic, fontSize, alignment, rotation,  prefix, suffix, selectedEmojiIcons, isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth,
-    isDottedLine, rowCount, columnCount) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+  let sql = `INSERT INTO widgetcontainertable (mainContainerId, type, contentData, offsetDx, offsetDy,widthSize,  height, selectTimeTextScanInt, isBold, isUnderline, isItalic, fontSize, alignment, rotation,  prefix, suffix, selectedEmojiIcons, isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth,
+    isDottedLine, rowCount, columnCount) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
   connection.query(sql, [
     dataToStore.mainContainerId,
@@ -427,6 +428,7 @@ router.post('/widgetContainers/add/', (req, res) => {
     dataToStore.offsetDy,
     dataToStore.widthSize,
     dataToStore.height,
+    dataToStore.selectTimeTextScanInt,
     dataToStore.isBold,
     dataToStore.isUnderline,
     dataToStore.isItalic,
@@ -457,6 +459,84 @@ router.post('/widgetContainers/add/', (req, res) => {
 });
 
 
+
+
+
+
+// zub
+// router.post('/widgetContainers/add/', (req, res) => {
+//   const { mainContainerId, type, contentData, offsetDx, offsetDy, widthSize, height, selectTimeTextScanInt, isBold, isUnderline, isItalic, fontSize, alignment, rotation,  prefix, suffix, selectedEmojiIcons, isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth, isDottedLine, rowCount, columnCount } = req.body;
+
+//   const dataToStore = {
+//     mainContainerId,
+//     type,
+//     contentData,
+//     offsetDx,
+//     offsetDy,
+//     widthSize,
+//     height:height || null,
+//     selectTimeTextScanInt:selectTimeTextScanInt || null,
+//     isBold:isBold || 0,
+//     isUnderline:isUnderline || 0,
+//     isItalic:isItalic || 0,
+//     fontSize:fontSize,
+//     alignment:alignment || "left",
+//     rotation:rotation,
+//     prefix:prefix || null,
+//     suffix: suffix || null,
+//     selectedEmojiIcons: selectedEmojiIcons || {},
+//     isRectangale:isRectangale || 0,
+//     isRoundRectangale:isRoundRectangale || 0,
+//     isCircularFixed:isCircularFixed || 0,
+//     isCircularNotFixed:isCircularNotFixed || 0,
+//     sliderLineWidth: sliderLineWidth,
+//     isDottedLine:isDottedLine || 0,
+//     rowCount:rowCount || null,
+//     columnCount:columnCount| null
+//   };
+
+//   let sql = `INSERT INTO widgetcontainertable (mainContainerId, type, contentData, offsetDx, offsetDy,widthSize,  height, selectTimeTextScanInt, isBold, isUnderline, isItalic, fontSize, alignment, rotation,  prefix, suffix, selectedEmojiIcons, isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth,
+//     isDottedLine, rowCount, columnCount) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
+//   connection.query(sql, [
+//     dataToStore.mainContainerId,
+//     dataToStore.type,
+//     dataToStore.contentData,
+//     dataToStore.offsetDx,
+//     dataToStore.offsetDy,
+//     dataToStore.widthSize,
+//     dataToStore.height,
+//     dataToStore.selectTimeTextScanInt,
+//     dataToStore.isBold,
+//     dataToStore.isUnderline,
+//     dataToStore.isItalic,
+//     dataToStore.fontSize,
+//     dataToStore.alignment,
+//     dataToStore.rotation,
+    
+//     dataToStore.prefix,
+//     dataToStore.suffix,
+//     JSON.stringify(dataToStore.selectedEmojiIcons),
+//     dataToStore.isRectangale,
+//     dataToStore.isRoundRectangale,
+//     dataToStore.isCircularFixed,
+//     dataToStore.isCircularNotFixed,
+//     dataToStore.sliderLineWidth,
+//     dataToStore.isDottedLine,
+//     dataToStore.rowCount,
+//     dataToStore.columnCount,
+//     ], function(err, result) {
+//     if (err) {
+//       console.error("Error inserting data:", err);
+//       res.status(500).json({ error: "An error occurred while inserting data." });
+//     } else {
+//       console.log("Successfully inserted data", result);
+//       res.json(result);
+//     }
+//   });
+// });
+
+
 // Get a widgetContainers
 
 router.get('/widgetContainers/get/', (req, res) => {
@@ -481,7 +561,7 @@ router.get('/widgetContainers/getMain/:id', (req, res) => {
   const mainContainerId = req.params.id;
 
   //let sql = `SELECT * FROM widgetcontainertable WHERE mainContainerId = ?`;//convert(containerImageBitmapData using utf8) as containerImageBitmapData
-  let sql = `SELECT id,mainContainerId, type, contentData, offsetDx, offsetDy, isBold, isUnderline,  isItalic, fontSize, alignment, rotation, widthSize,  height,  prefix, suffix, convert(selectedEmojiIcons using utf8) as selectedEmojiIcons, isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth,
+  let sql = `SELECT id,mainContainerId, type, contentData, offsetDx, offsetDy, isBold, isUnderline,  isItalic, fontSize, alignment, rotation, widthSize,  height, selectTimeTextScanInt, prefix, suffix, convert(selectedEmojiIcons using utf8) as selectedEmojiIcons, isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth,
   isDottedLine, rowCount, columnCount FROM widgetcontainertable WHERE mainContainerId = ?`;
   connection.query(sql, [mainContainerId], function(err, results) {
     if (err) {

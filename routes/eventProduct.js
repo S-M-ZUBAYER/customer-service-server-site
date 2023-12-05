@@ -75,7 +75,38 @@ router.get('/eventProducts/:productName', (req, res) => {
   });
 });
 
+router.get('/eventProducts/region/:productName/:productCountryName', (req, res) => {
+  const productName = req.params.productName;
+  const productCountryName = req.params.productCountryName;
 
+  const query = 'SELECT * FROM eventproducts WHERE productName = ? AND productCountryName = ?';
+
+  connection.query(query, [productName, productCountryName], (error, results) => {
+    if (error) {
+      console.error('Error retrieving products:', error);
+      res.status(500).send('Error retrieving products');
+    } else {
+      res.json(results);
+    }
+  });
+});
+
+
+
+router.get('/eventProducts/country/:productCountryName', (req, res) => {
+  const productCountryName = req.params.productCountryName;
+
+  const query = 'SELECT * FROM eventproducts WHERE productCountryName = ?';
+
+  connection.query(query, [productCountryName], (error, results) => {
+    if (error) {
+      console.error('Error retrieving products:', error);
+      res.status(500).send('Error retrieving products');
+    } else {
+      res.json(results);
+    }
+  });
+});
 
 
 
@@ -109,7 +140,7 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
   
   const productImgFile = req.files['productImg'];
   const productImg = productImgFile ? productImgFile[0] : null;
-  const imgPath='https://grozziie.zjweiting.com:8033/tht/eventProductImages'
+  const imgPath='https://grozziieget.zjweiting.com:8033/tht/eventProductImages'
 
 //create a object for all available data
   const product = {
@@ -221,67 +252,123 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
 
 //create the route and function to update a specific event product information
 
-router.put('/eventProducts/update/:id', upload.fields([{ name: 'productImg' }, { name: 'invoiceFile' }, { name: 'images' }, { name: 'videos' }]), (req, res)=>{
+router.put('/eventProductImages/update/:id', upload.single('newProductImg'), (req, res) => {
+  console.log(req.body);
+
+  const {
+      productName,
+      oldImg,
+      productPrice,
+      productDescription,
+      modelNumber,
+      printerColor,
+      connectorType,
+      stockQuantity,
+      shelfStartTime,
+      shelfEndTime,
+      afterSalesText,
+      afterSalesInstruction,
+      inventoryText,
+  } = JSON.parse(req.body.updatedProduct);
+
+  const productImgFile = req.file;
+  console.log(productImgFile, 'file');
+  const imgFilePath = `public/eventProductImages/${oldImg}`;
+  fs.unlink(imgFilePath, (err) => {
+      if (err) {
+          console.error('Error deleting image file:', err);
+      }
+  });
+  console.log('click');
+
+  const productImg = productImgFile ? productImgFile.filename : null;
+
+  const product = {
+      productName,
+      productPrice,
+      productDescription,
+      modelNumber,
+      printerColor,
+      connectorType,
+      stockQuantity,
+      shelfStartTime,
+      shelfEndTime,
+      afterSalesText,
+      afterSalesInstruction,
+      inventoryText,
+      productImg,
+  };
+
+  let sql = `UPDATE eventproducts SET productName='${productName}', productPrice='${productPrice}', productDescription='${productDescription}', modelNumber='${modelNumber}', printerColor='${printerColor}', connectorType='${connectorType}', stockQuantity='${stockQuantity}', shelfStartTime='${shelfStartTime}', shelfEndTime='${shelfEndTime}', afterSalesText='${afterSalesText}', afterSalesInstruction='${afterSalesInstruction}', inventoryText='${inventoryText}', productImg='${productImg}' WHERE id=?`;
+
+  connection.query(sql, [req.params.id], function (err, result) {
+      if (err) throw err;
+      console.log('successfully updated', result);
+      res.json(result);
+  });
+});
+
+// router.put('/eventProducts/update/:id', upload.fields([{ name: 'productImg' }, { name: 'invoiceFile' }, { name: 'images' }, { name: 'videos' }]), (req, res)=>{
   
 
 
-  const {
-    productName,
-    productPrice,
-    productDescription,
-    modelNumber,
-    printerColor,
-    connectorType,
-    stockQuantity,
-    shelfStartTime,
-    shelfEndTime,
-    afterSalesText,
-    afterSalesInstruction,
-    inventoryText
-  } = req.body;
+//   const {
+//     productName,
+//     productPrice,
+//     productDescription,
+//     modelNumber,
+//     printerColor,
+//     connectorType,
+//     stockQuantity,
+//     shelfStartTime,
+//     shelfEndTime,
+//     afterSalesText,
+//     afterSalesInstruction,
+//     inventoryText
+//   } = req.body;
 
-  const productImg = req.files['productImg'][0];
-  const invoiceFiles = req.files['invoiceFile'][0];
+//   const productImg = req.files['productImg'][0];
+//   const invoiceFiles = req.files['invoiceFile'][0];
 
 
-  const product = {
-    productName,
-    productPrice,
-    productDescription,
-    modelNumber,
-    printerColor,
-    connectorType,
-    stockQuantity,
-    shelfStartTime,
-    shelfEndTime,
-    afterSalesText,
-    afterSalesInstruction,
-    inventoryText,
-    productImg: productImg.filename,
-    invoiceFile: invoiceFile.filename,
+//   const product = {
+//     productName,
+//     productPrice,
+//     productDescription,
+//     modelNumber,
+//     printerColor,
+//     connectorType,
+//     stockQuantity,
+//     shelfStartTime,
+//     shelfEndTime,
+//     afterSalesText,
+//     afterSalesInstruction,
+//     inventoryText,
+//     productImg: productImg.filename,
+//     invoiceFile: invoiceFile.filename,
 
-  };
-  const allImages = req.files['images'];
-  const allVideos = req.files['videos'];
+//   };
+//   const allImages = req.files['images'];
+//   const allVideos = req.files['videos'];
 
-  // Check if files are present
-  if (allImages && allImages.length > 0) {
-    product.allImages = allImages.map((file) => file.filename);
-  }
+//   // Check if files are present
+//   if (allImages && allImages.length > 0) {
+//     product.allImages = allImages.map((file) => file.filename);
+//   }
 
-  if (allVideos && allVideos.length > 0) {
-    product.allVideos = allVideos.map((file) => file.filename);
-  }
+//   if (allVideos && allVideos.length > 0) {
+//     product.allVideos = allVideos.map((file) => file.filename);
+//   }
  
 
-  let sql = `UPDATE eventproducts SET productName='${productName}', productPrice='${productPrice}', productDescription='${productDescription}',modelNumber='${modelNumber}', printerColor='${printerColor}', connectorType='${connectorType}', stockQuantity='${stockQuantity}',shelfStartTime='${shelfStartTime}', shelfEndTime='${shelfEndTime}', afterSalesText='${afterSalesText}',  afterSalesInstruction='${afterSalesInstruction}',inventoryText='${inventoryText}', productImg='${productImg.filename}', invoiceFile='${invoiceFiles}', allImages='${allImages.map((file) => file.filename).join(',')}',allVideos='${allVideos.map((file) => file.filename).join(',')}' WHERE id=?`;
-  connection.query(sql, [req.params.id],  function(err, result){
-     if (err) throw err;
-     console.log("successfully updated", result);
-     res.json(result);;
-  });
+//   let sql = `UPDATE eventproducts SET productName='${productName}', productPrice='${productPrice}', productDescription='${productDescription}',modelNumber='${modelNumber}', printerColor='${printerColor}', connectorType='${connectorType}', stockQuantity='${stockQuantity}',shelfStartTime='${shelfStartTime}', shelfEndTime='${shelfEndTime}', afterSalesText='${afterSalesText}',  afterSalesInstruction='${afterSalesInstruction}',inventoryText='${inventoryText}', productImg='${productImg.filename}', invoiceFile='${invoiceFiles}', allImages='${allImages.map((file) => file.filename).join(',')}',allVideos='${allVideos.map((file) => file.filename).join(',')}' WHERE id=?`;
+//   connection.query(sql, [req.params.id],  function(err, result){
+//      if (err) throw err;
+//      console.log("successfully updated", result);
+//      res.json(result);;
+//   });
  
-});
+// });
 
 
 

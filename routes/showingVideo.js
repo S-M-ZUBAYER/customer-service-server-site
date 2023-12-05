@@ -69,7 +69,7 @@ router.post('/showingVideo/add', upload.single('showingVideo'), (req, res) => {
       [
         title,
         showingVideo.filename,
-        'https://grozziie.zjweiting.com:8033/tht/showingVideos/',
+        'https://grozziieget.zjweiting.com:8033/tht/showingVideos/',
       ],
       (error, results) => {
         if (error) {

@@ -76,6 +76,39 @@ router.get('/mallProducts/:productName', (req, res) => {
   });
 });
 
+router.get('/mallProducts/region/:productName/:productCountryName', (req, res) => {
+  const productName = req.params.productName;
+  const productCountryName = req.params.productCountryName;
+
+  const query = 'SELECT * FROM mallproducts WHERE productName = ? AND productCountryName = ?';
+
+  connection.query(query, [productName, productCountryName], (error, results) => {
+    if (error) {
+      console.error('Error retrieving products:', error);
+      res.status(500).send('Error retrieving products');
+    } else {
+      res.json(results);
+    }
+  });
+});
+
+
+
+router.get('/mallProducts/country/:productCountryName', (req, res) => {
+  const productCountryName = req.params.productCountryName;
+
+  const query = 'SELECT * FROM mallproducts WHERE productCountryName = ?';
+
+  connection.query(query, [productCountryName], (error, results) => {
+    if (error) {
+      console.error('Error retrieving products:', error);
+      res.status(500).send('Error retrieving products');
+    } else {
+      res.json(results);
+    }
+  });
+});
+
 
 
 //create the route and function to add all the information of mall product to store in database 
@@ -109,7 +142,7 @@ console.log(req.body)
   
   const productImgFile = req.files['productImg'];
   const productImg = productImgFile ? productImgFile[0] : null;
-  const imgPath='https://grozziie.zjweiting.com:8033/tht/mallProductImages'
+  const imgPath='https://grozziieget.zjweiting.com:8033/tht/mallProductImages'
 
 //create a object for all available data
   const product = {
@@ -220,66 +253,127 @@ console.log(req.body)
 
 //create the route and function to update a specific mall product information
 
-router.put('/mallProducts/update/:id', upload.fields([{ name: 'productImg' }, { name: 'invoiceFile' }, { name: 'images' }, { name: 'videos' }]), (req, res)=>{
-  
+
+
+
+router.put('/mallProductImages/update/:id', upload.single('newProductImg'), (req, res) => {
+  console.log(req.body);
 
   const {
-    productName,
-    productPrice,
-    productDescription,
-    modelNumber,
-    printerColor,
-    connectorType,
-    stockQuantity,
-    shelfStartTime,
-    shelfEndTime,
-    afterSalesText,
-    afterSalesInstruction,
-    inventoryText
-  } = req.body;
+      productName,
+      oldImg,
+      productPrice,
+      productDescription,
+      modelNumber,
+      printerColor,
+      connectorType,
+      stockQuantity,
+      shelfStartTime,
+      shelfEndTime,
+      afterSalesText,
+      afterSalesInstruction,
+      inventoryText,
+  } = JSON.parse(req.body.updatedProduct);
 
-  const productImg = req.files['productImg'][0];
-  const invoiceFiles = req.files['invoiceFile'][0];
+  const productImgFile = req.file;
+  console.log(productImgFile, 'file');
+  const imgFilePath = `public/mallProductImages/${oldImg}`;
+  fs.unlink(imgFilePath, (err) => {
+      if (err) {
+          console.error('Error deleting image file:', err);
+      }
+  });
+  console.log('click');
 
+  const productImg = productImgFile ? productImgFile.filename : null;
 
   const product = {
-    productName,
-    productPrice,
-    productDescription,
-    modelNumber,
-    printerColor,
-    connectorType,
-    stockQuantity,
-    shelfStartTime,
-    shelfEndTime,
-    afterSalesText,
-    afterSalesInstruction,
-    inventoryText,
-    productImg: productImg.filename,
-    invoiceFile: invoiceFile.filename,
-
+      productName,
+      productPrice,
+      productDescription,
+      modelNumber,
+      printerColor,
+      connectorType,
+      stockQuantity,
+      shelfStartTime,
+      shelfEndTime,
+      afterSalesText,
+      afterSalesInstruction,
+      inventoryText,
+      productImg,
   };
-  const allImages = req.files['images'];
-  const allVideos = req.files['videos'];
 
-  // Check if files are present
-  if (allImages && allImages.length > 0) {
-    product.allImages = allImages.map((file) => file.filename);
-  }
+  let sql = `UPDATE mallproducts SET productName='${productName}', productPrice='${productPrice}', productDescription='${productDescription}', modelNumber='${modelNumber}', printerColor='${printerColor}', connectorType='${connectorType}', stockQuantity='${stockQuantity}', shelfStartTime='${shelfStartTime}', shelfEndTime='${shelfEndTime}', afterSalesText='${afterSalesText}', afterSalesInstruction='${afterSalesInstruction}', inventoryText='${inventoryText}', productImg='${productImg}' WHERE id=?`;
 
-  if (allVideos && allVideos.length > 0) {
-    product.allVideos = allVideos.map((file) => file.filename);
-  }
-
-
-  let sql = `UPDATE mallproducts SET productName='${productName}', productPrice='${productPrice}', productDescription='${productDescription}',modelNumber='${modelNumber}', printerColor='${printerColor}', connectorType='${connectorType}', stockQuantity='${stockQuantity}',shelfStartTime='${shelfStartTime}', shelfEndTime='${shelfEndTime}', afterSalesText='${afterSalesText}',  afterSalesInstruction='${afterSalesInstruction}',inventoryText='${inventoryText}', productImg='${productImg.filename}', invoiceFile='${invoiceFiles}', allImages='${allImages.map((file) => file.filename).join(',')}',allVideos='${allVideos.map((file) => file.filename).join(',')}' WHERE id=?`;
-  connection.query(sql, [req.params.id],  function(err, result){
-     if (err) throw err;
-     console.log("successfully updated", result);
-     res.json(result);;
+  connection.query(sql, [req.params.id], function (err, result) {
+      if (err) throw err;
+      console.log('successfully updated', result);
+      res.json(result);
   });
- 
 });
+
+// //create the route and function to update a specific mall product information
+
+// router.put('/mallProducts/update/:id', upload.fields([{ name: 'productImg' }, { name: 'invoiceFile' }, { name: 'images' }, { name: 'videos' }]), (req, res)=>{
+  
+
+//   const {
+//     productName,
+//     productPrice,
+//     productDescription,
+//     modelNumber,
+//     printerColor,
+//     connectorType,
+//     stockQuantity,
+//     shelfStartTime,
+//     shelfEndTime,
+//     afterSalesText,
+//     afterSalesInstruction,
+//     inventoryText
+//   } = req.body;
+
+//   const productImg = req.files['productImg'][0];
+//   const invoiceFiles = req.files['invoiceFile'][0];
+
+
+//   const product = {
+//     productName,
+//     productPrice,
+//     productDescription,
+//     modelNumber,
+//     printerColor,
+//     connectorType,
+//     stockQuantity,
+//     shelfStartTime,
+//     shelfEndTime,
+//     afterSalesText,
+//     afterSalesInstruction,
+//     inventoryText,
+//     productImg: productImg.filename,
+//     invoiceFile: invoiceFile.filename,
+
+//   };
+//   const allImages = req.files['images'];
+//   const allVideos = req.files['videos'];
+
+//   // Check if files are present
+//   if (allImages && allImages.length > 0) {
+//     product.allImages = allImages.map((file) => file.filename);
+//   }
+
+//   if (allVideos && allVideos.length > 0) {
+//     product.allVideos = allVideos.map((file) => file.filename);
+//   }
+
+
+//   let sql = `UPDATE mallproducts SET productName='${productName}', productPrice='${productPrice}', productDescription='${productDescription}',modelNumber='${modelNumber}', printerColor='${printerColor}', connectorType='${connectorType}', stockQuantity='${stockQuantity}',shelfStartTime='${shelfStartTime}', shelfEndTime='${shelfEndTime}', afterSalesText='${afterSalesText}',  afterSalesInstruction='${afterSalesInstruction}',inventoryText='${inventoryText}', productImg='${productImg.filename}', invoiceFile='${invoiceFiles}', allImages='${allImages.map((file) => file.filename).join(',')}',allVideos='${allVideos.map((file) => file.filename).join(',')}' WHERE id=?`;
+//   connection.query(sql, [req.params.id],  function(err, result){
+//      if (err) throw err;
+//      console.log("successfully updated", result);
+//      res.json(result);;
+//   });
+ 
+// });
 
 
 
@@ -307,6 +401,7 @@ router.delete('/mallProducts/delete/:id', (req, res) => {
 
      // Delete associated main images
     const imgFilePath = `public/mallProductImages/${product.productImg}`;
+    console.log(imgFilePath,"image")
     fs.unlink(imgFilePath, (err) => {
       if (err) {
         console.error('Error deleting image file:', err);
