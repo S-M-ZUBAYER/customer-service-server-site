@@ -24,12 +24,14 @@ router.use(express.static('public'))
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'public/mallProductImages')
+    cb(null, 'public/mallProductImages');
   },
   filename: (req, file, cb) => {
-    cb(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname))
+    const randomDigits = Math.floor(1000 + Math.random() * 9000); // Generate 4 random digits
+    cb(null, file.fieldname + "_" + Date.now() + "_" + randomDigits + path.extname(file.originalname));
   }
-})
+});
+
 
 const bodyParser = require('body-parser');
 app.use(bodyParser.json({ limit: '100mb' }));
@@ -312,68 +314,130 @@ router.put('/mallProductImages/update/:id', upload.single('newProductImg'), (req
   });
 });
 
-// //create the route and function to update a specific mall product information
-
-// router.put('/mallProducts/update/:id', upload.fields([{ name: 'productImg' }, { name: 'invoiceFile' }, { name: 'images' }, { name: 'videos' }]), (req, res)=>{
-  
-
-//   const {
-//     productName,
-//     productPrice,
-//     productDescription,
-//     modelNumber,
-//     printerColor,
-//     connectorType,
-//     stockQuantity,
-//     shelfStartTime,
-//     shelfEndTime,
-//     afterSalesText,
-//     afterSalesInstruction,
-//     inventoryText
-//   } = req.body;
-
-//   const productImg = req.files['productImg'][0];
-//   const invoiceFiles = req.files['invoiceFile'][0];
 
 
-//   const product = {
-//     productName,
-//     productPrice,
-//     productDescription,
-//     modelNumber,
-//     printerColor,
-//     connectorType,
-//     stockQuantity,
-//     shelfStartTime,
-//     shelfEndTime,
-//     afterSalesText,
-//     afterSalesInstruction,
-//     inventoryText,
-//     productImg: productImg.filename,
-//     invoiceFile: invoiceFile.filename,
-
-//   };
-//   const allImages = req.files['images'];
-//   const allVideos = req.files['videos'];
-
-//   // Check if files are present
-//   if (allImages && allImages.length > 0) {
-//     product.allImages = allImages.map((file) => file.filename);
-//   }
-
-//   if (allVideos && allVideos.length > 0) {
-//     product.allVideos = allVideos.map((file) => file.filename);
-//   }
 
 
-//   let sql = `UPDATE mallproducts SET productName='${productName}', productPrice='${productPrice}', productDescription='${productDescription}',modelNumber='${modelNumber}', printerColor='${printerColor}', connectorType='${connectorType}', stockQuantity='${stockQuantity}',shelfStartTime='${shelfStartTime}', shelfEndTime='${shelfEndTime}', afterSalesText='${afterSalesText}',  afterSalesInstruction='${afterSalesInstruction}',inventoryText='${inventoryText}', productImg='${productImg.filename}', invoiceFile='${invoiceFiles}', allImages='${allImages.map((file) => file.filename).join(',')}',allVideos='${allVideos.map((file) => file.filename).join(',')}' WHERE id=?`;
-//   connection.query(sql, [req.params.id],  function(err, result){
-//      if (err) throw err;
-//      console.log("successfully updated", result);
-//      res.json(result);;
-//   });
- 
-// });
+router.put('/mallProductImages/updateRelatedImages/:id', upload.array('images', 10), (req, res) => {
+  const productId = req.params.id;
+  const sqlSelect = `SELECT * FROM mallproducts WHERE id = ?`;
+
+  connection.query(sqlSelect, [productId], function(err, rows) {
+    if (err) {
+      console.error('Error retrieving mall product:', err);
+      res.status(500).send('Error retrieving mall product');
+      return;
+    }
+
+    if (rows.length === 0) {
+      res.status(404).send('Mall product not found');
+      return;
+    }
+
+    const product = rows[0];
+
+    const imageFilesBefore = product.allImages ? product.allImages.split(",") : [];
+
+    // Delete old images
+    imageFilesBefore.forEach((filename) => {
+      const filePath = `public/mallProductImages/${filename}`;
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error('Error deleting image file:', err);
+        }
+      });
+    });
+
+    // Handle the uploaded files in req.files
+    const updatedImages = req.files.map(file => file.filename);
+
+    console.log(updatedImages);
+
+    // Compare filenames before and after unlinking
+    const removedImages = imageFilesBefore.filter(filename => !updatedImages.includes(filename));
+
+    // Your logic to update the related images in the database goes here
+    if (removedImages.length > 0) {
+      const sqlUpdate = `UPDATE mallproducts SET allImages = ? WHERE id = ?`;
+      const newImageFiles = updatedImages.join(",");
+    
+      connection.query(sqlUpdate, [newImageFiles, productId], function(updateErr, updateResult) {
+        if (updateErr) {
+          console.error('Error updating database with new image filenames:', updateErr);
+          res.status(500).send('Error updating database with new image filenames');
+          return;
+        }
+
+        // Send a response indicating success
+        res.status(200).json({ message: 'Related images updated successfully' });
+      });
+    } else {
+      // Send a response indicating success without updating the database
+      res.status(200).json({ message: 'Related images updated successfully' });
+    }
+  });
+});
+router.put('/mallProductImages/updateDescriptionImage/:id', upload.array('images', 10), (req, res) => {
+  const productId = req.params.id;
+  const sqlSelect = `SELECT * FROM mallproducts WHERE id = ?`;
+
+  connection.query(sqlSelect, [productId], function(err, rows) {
+    if (err) {
+      console.error('Error retrieving mall product:', err);
+      res.status(500).send('Error retrieving mall product');
+      return;
+    }
+
+    if (rows.length === 0) {
+      res.status(404).send('Mall product not found');
+      return;
+    }
+
+    const product = rows[0];
+
+    const imageFilesBefore = product.allDescriptionImages ? product.allDescriptionImages.split(",") : [];
+
+    // Delete old images
+    imageFilesBefore.forEach((filename) => {
+      const filePath = `public/mallProductImages/${filename}`;
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error('Error deleting image file:', err);
+        }
+      });
+    });
+
+    // Handle the uploaded files in req.files
+    const updatedImages = req.files.map(file => file.filename);
+
+    console.log(updatedImages);
+
+    // Compare filenames before and after unlinking
+    const removedImages = imageFilesBefore.filter(filename => !updatedImages.includes(filename));
+
+    // Your logic to update the related images in the database goes here
+    if (removedImages.length > 0) {
+      const sqlUpdate = `UPDATE mallproducts SET allDescriptionImages = ? WHERE id = ?`;
+      const newImageFiles = updatedImages.join(",");
+    
+      connection.query(sqlUpdate, [newImageFiles, productId], function(updateErr, updateResult) {
+        if (updateErr) {
+          console.error('Error updating database with new image filenames:', updateErr);
+          res.status(500).send('Error updating database with new image filenames');
+          return;
+        }
+
+        // Send a response indicating success
+        res.status(200).json({ message: 'Related images updated successfully' });
+      });
+    } else {
+      // Send a response indicating success without updating the database
+      res.status(200).json({ message: 'Related images updated successfully' });
+    }
+  });
+});
+
+
 
 
 

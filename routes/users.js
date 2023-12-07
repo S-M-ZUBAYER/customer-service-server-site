@@ -187,9 +187,6 @@ router.post('/check-user', (req, res) => {
 //create the route and function to update a specific user information according to the email address
 
 router.put('/users/update/:id', (req, res) => {
-
-
-
   const { name, phone, designation, language, country } = req.body;
 
   let sql = `UPDATE users SET name='${name}', phone='${phone}', designation='${designation}', language='${language}', country='${country}' WHERE id=?`;
