@@ -309,6 +309,49 @@ router.put('/eventProductImages/update/:id', upload.single('newProductImg'), (re
   });
 });
 
+router.put('/eventProductImages/update/textInformation/:id', (req, res) => {
+  const {
+    productName,
+    productPrice,
+    productDescription,
+    modelNumber,
+    printerColor,
+    connectorType,
+    stockQuantity,
+    shelfStartTime,
+    shelfEndTime,
+    afterSalesText,
+    afterSalesInstruction,
+    inventoryText,
+} = req.body.updatedProduct;
+
+const product = {
+    productName,
+    productPrice,
+    productDescription,
+    modelNumber,
+    printerColor,
+    connectorType,
+    stockQuantity,
+    shelfStartTime,
+    shelfEndTime,
+    afterSalesText,
+    afterSalesInstruction,
+    inventoryText,
+};
+
+let sql = `UPDATE eventproducts SET productName=?, productPrice=?, productDescription=?, modelNumber=?, printerColor=?, connectorType=?, stockQuantity=?, shelfStartTime=?, shelfEndTime=?, afterSalesText=?, afterSalesInstruction=?, inventoryText=? WHERE id=?`;
+
+connection.query(sql, [productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, req.params.id], function (err, result) {
+    if (err) {
+        console.error('Error updating database:', err);
+        res.status(500).send('Error updating database');
+        return;
+    }
+    console.log('Successfully updated:', result);
+    res.json(result);
+});
+});
 
 
 router.put('/eventProductImages/updateRelatedImages/:id', upload.array('images', 10), (req, res) => {
@@ -318,7 +361,7 @@ router.put('/eventProductImages/updateRelatedImages/:id', upload.array('images',
   connection.query(sqlSelect, [productId], function(err, rows) {
     if (err) {
       console.error('Error retrieving event product:', err);
-      res.status(500).send('Error retrieving mall product');
+      res.status(500).send('Error retrieving event product');
       return;
     }
 
@@ -370,6 +413,8 @@ router.put('/eventProductImages/updateRelatedImages/:id', upload.array('images',
     }
   });
 });
+
+
 router.put('/eventProductImages/updateDescriptionImage/:id', upload.array('images', 10), (req, res) => {
   const productId = req.params.id;
   const sqlSelect = `SELECT * FROM eventproducts WHERE id = ?`;
@@ -430,79 +475,12 @@ router.put('/eventProductImages/updateDescriptionImage/:id', upload.array('image
   });
 });
 
-// router.put('/eventProducts/update/:id', upload.fields([{ name: 'productImg' }, { name: 'invoiceFile' }, { name: 'images' }, { name: 'videos' }]), (req, res)=>{
-  
-
-
-//   const {
-//     productName,
-//     productPrice,
-//     productDescription,
-//     modelNumber,
-//     printerColor,
-//     connectorType,
-//     stockQuantity,
-//     shelfStartTime,
-//     shelfEndTime,
-//     afterSalesText,
-//     afterSalesInstruction,
-//     inventoryText
-//   } = req.body;
-
-//   const productImg = req.files['productImg'][0];
-//   const invoiceFiles = req.files['invoiceFile'][0];
-
-
-//   const product = {
-//     productName,
-//     productPrice,
-//     productDescription,
-//     modelNumber,
-//     printerColor,
-//     connectorType,
-//     stockQuantity,
-//     shelfStartTime,
-//     shelfEndTime,
-//     afterSalesText,
-//     afterSalesInstruction,
-//     inventoryText,
-//     productImg: productImg.filename,
-//     invoiceFile: invoiceFile.filename,
-
-//   };
-//   const allImages = req.files['images'];
-//   const allVideos = req.files['videos'];
-
-//   // Check if files are present
-//   if (allImages && allImages.length > 0) {
-//     product.allImages = allImages.map((file) => file.filename);
-//   }
-
-//   if (allVideos && allVideos.length > 0) {
-//     product.allVideos = allVideos.map((file) => file.filename);
-//   }
- 
-
-//   let sql = `UPDATE eventproducts SET productName='${productName}', productPrice='${productPrice}', productDescription='${productDescription}',modelNumber='${modelNumber}', printerColor='${printerColor}', connectorType='${connectorType}', stockQuantity='${stockQuantity}',shelfStartTime='${shelfStartTime}', shelfEndTime='${shelfEndTime}', afterSalesText='${afterSalesText}',  afterSalesInstruction='${afterSalesInstruction}',inventoryText='${inventoryText}', productImg='${productImg.filename}', invoiceFile='${invoiceFiles}', allImages='${allImages.map((file) => file.filename).join(',')}',allVideos='${allVideos.map((file) => file.filename).join(',')}' WHERE id=?`;
-//   connection.query(sql, [req.params.id],  function(err, result){
-//      if (err) throw err;
-//      console.log("successfully updated", result);
-//      res.json(result);;
-//   });
- 
-// });
 
 
 
   
 
-//create the route and function to delete a mall product according to the id
-
-
-
-
-
-
+//create the route and function to delete event product according to the id
 
 router.delete('/eventProducts/delete/:id', (req, res) => {
   const productId = req.params.id;
@@ -510,8 +488,8 @@ router.delete('/eventProducts/delete/:id', (req, res) => {
   const sql = `SELECT * FROM eventproducts WHERE id = ?`;
   connection.query(sql, [productId], function(err, rows) {
     if (err) {
-      console.error('Error retrieving mall product:', err);
-      res.status(500).send('Error retrieving mall product');
+      console.error('Error retrieving event product:', err);
+      res.status(500).send('Error retrieving event product');
       return;
     }
 

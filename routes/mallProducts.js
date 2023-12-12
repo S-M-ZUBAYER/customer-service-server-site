@@ -314,6 +314,50 @@ router.put('/mallProductImages/update/:id', upload.single('newProductImg'), (req
   });
 });
 
+router.put('/mallProductImages/update/textInformation/:id', (req, res) => {
+  const {
+      productName,
+      productPrice,
+      productDescription,
+      modelNumber,
+      printerColor,
+      connectorType,
+      stockQuantity,
+      shelfStartTime,
+      shelfEndTime,
+      afterSalesText,
+      afterSalesInstruction,
+      inventoryText,
+  } = req.body.updatedProduct;
+
+  const product = {
+      productName,
+      productPrice,
+      productDescription,
+      modelNumber,
+      printerColor,
+      connectorType,
+      stockQuantity,
+      shelfStartTime,
+      shelfEndTime,
+      afterSalesText,
+      afterSalesInstruction,
+      inventoryText,
+  };
+
+  let sql = `UPDATE mallproducts SET productName=?, productPrice=?, productDescription=?, modelNumber=?, printerColor=?, connectorType=?, stockQuantity=?, shelfStartTime=?, shelfEndTime=?, afterSalesText=?, afterSalesInstruction=?, inventoryText=? WHERE id=?`;
+
+  connection.query(sql, [productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, req.params.id], function (err, result) {
+      if (err) {
+          console.error('Error updating database:', err);
+          res.status(500).send('Error updating database');
+          return;
+      }
+      console.log('Successfully updated:', result);
+      res.json(result);
+  });
+});
+
 
 
 
