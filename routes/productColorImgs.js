@@ -105,6 +105,49 @@ router.post('/colorImg/add', upload.single('colorImage'), (req, res) => {
   });
   
 
+
+  router.put('/colorImg/edit/:id', (req, res) => {
+    const colorId = req.params.id;
+  
+    const {
+      colorName,
+      typeName,
+      colorProductPrice,
+      colorProductQuantity,
+      colorProductDescription
+    } = req.body;
+  
+    // Check if there are any changes in the request body
+    if (!colorName && !typeName && !colorProductPrice && !colorProductQuantity && !colorProductDescription) {
+      return res.status(400).json({ status: 'error', message: 'No data provided for update' });
+    }
+  
+    // Construct the data to be updated in the database
+    const updatedColorData = {
+      colorName,
+      typeName,
+      colorProductPrice,
+      colorProductQuantity,
+      colorProductDescription
+    };
+  
+    // Update the data in the database
+    connection.query(
+      'UPDATE allcolorimages SET ? WHERE id = ?',
+      [updatedColorData, colorId],
+      (error, results) => {
+        if (error) {
+          console.error('Error updating color image:', error);
+          res.status(500).json({ status: 'error', message: 'Error updating color image' });
+        } else {
+          console.log('Color image updated successfully');
+          res.status(200).json({ status: 'success', message: 'Color image updated successfully' });
+        }
+      }
+    );
+  });
+  
+
   // Add a new route handler for GET requests based on the model number
 router.get('/colorImg/:modelNumber', (req, res) => {
   const { modelNumber } = req.params;

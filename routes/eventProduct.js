@@ -240,7 +240,6 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
         console.error('Error creating product:', error);
         res.status(500).send('Error creating product');
       } else {
-        console.log('Product created successfully');
         res.send('Product created successfully');
       }
     }
@@ -254,7 +253,7 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
 //create the route and function to update a specific event product information
 
 router.put('/eventProductImages/update/:id', upload.single('newProductImg'), (req, res) => {
-  console.log(req.body);
+ 
 
   const {
       productName,
@@ -273,14 +272,12 @@ router.put('/eventProductImages/update/:id', upload.single('newProductImg'), (re
   } = JSON.parse(req.body.updatedProduct);
 
   const productImgFile = req.file;
-  console.log(productImgFile, 'file');
   const imgFilePath = `public/eventProductImages/${oldImg}`;
   fs.unlink(imgFilePath, (err) => {
       if (err) {
           console.error('Error deleting image file:', err);
       }
   });
-  console.log('click');
 
   const productImg = productImgFile ? productImgFile.filename : null;
 
@@ -304,7 +301,6 @@ router.put('/eventProductImages/update/:id', upload.single('newProductImg'), (re
 
   connection.query(sql, [req.params.id], function (err, result) {
       if (err) throw err;
-      console.log('successfully updated', result);
       res.json(result);
   });
 });
@@ -348,7 +344,6 @@ connection.query(sql, [productName, productPrice, productDescription, modelNumbe
         res.status(500).send('Error updating database');
         return;
     }
-    console.log('Successfully updated:', result);
     res.json(result);
 });
 });
@@ -386,8 +381,6 @@ router.put('/eventProductImages/updateRelatedImages/:id', upload.array('images',
 
     // Handle the uploaded files in req.files
     const updatedImages = req.files.map(file => file.filename);
-
-    console.log(updatedImages);
 
     // Compare filenames before and after unlinking
     const removedImages = imageFilesBefore.filter(filename => !updatedImages.includes(filename));
@@ -448,8 +441,6 @@ router.put('/eventProductImages/updateDescriptionImage/:id', upload.array('image
     // Handle the uploaded files in req.files
     const updatedImages = req.files.map(file => file.filename);
 
-    console.log(updatedImages);
-
     // Compare filenames before and after unlinking
     const removedImages = imageFilesBefore.filter(filename => !updatedImages.includes(filename));
 
@@ -476,7 +467,187 @@ router.put('/eventProductImages/updateDescriptionImage/:id', upload.array('image
 });
 
 
+//This part to make the api to update the Instruction Images
+router.put('/eventProductImages/updateInstructionsImages/:id', upload.array('images', 10), (req, res) => {
+  const productId = req.params.id;
+  const sqlSelect = `SELECT * FROM eventproducts WHERE id = ?`;
 
+  connection.query(sqlSelect, [productId], function(err, rows) {
+    if (err) {
+      console.error('Error retrieving mall product:', err);
+      res.status(500).send('Error retrieving mall product');
+      return;
+    }
+
+    if (rows.length === 0) {
+      res.status(404).send('Event product not found');
+      return;
+    }
+
+    const product = rows[0];
+
+    const imageFilesBefore = product.allInstructionsImage ? product.allInstructionsImage.split(",") : [];
+
+    // Delete old images
+    imageFilesBefore.forEach((filename) => {
+      const filePath = `public/eventProductImages/${filename}`;
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error('Error deleting image file:', err);
+        }
+      });
+    });
+
+    // Handle the uploaded files in req.files
+    const updatedImages = req.files.map(file => file.filename);
+
+
+    // Compare filenames before and after unlinking
+    const removedImages = imageFilesBefore.filter(filename => !updatedImages.includes(filename));
+
+    // Your logic to update the related images in the database goes here
+    if (removedImages.length > 0) {
+      const sqlUpdate = `UPDATE eventproducts SET allInstructionsImage = ? WHERE id = ?`;
+      const newImageFiles = updatedImages.join(",");
+    
+      connection.query(sqlUpdate, [newImageFiles, productId], function(updateErr, updateResult) {
+        if (updateErr) {
+          console.error('Error updating database with new image filenames:', updateErr);
+          res.status(500).send('Error updating database with new image filenames');
+          return;
+        }
+
+        // Send a response indicating success
+        res.status(200).json({ message: 'InstructionsImage images updated successfully' });
+      });
+    } else {
+      // Send a response indicating success without updating the database
+      res.status(200).json({ message: 'InstructionsImage images updated successfully' });
+    }
+  });
+});
+
+
+//This part to make the api to update the Related Videos
+router.put('/eventProductImages/updateRelatedVideos/:id', upload.array('videos', 10), (req, res) => {
+  const productId = req.params.id;
+  const sqlSelect = `SELECT * FROM eventproducts WHERE id = ?`;
+
+  connection.query(sqlSelect, [productId], function(err, rows) {
+    if (err) {
+      console.error('Error retrieving Event product:', err);
+      res.status(500).send('Error retrieving Event product');
+      return;
+    }
+
+    if (rows.length === 0) {
+      res.status(404).send('Event product not found');
+      return;
+    }
+
+    const product = rows[0];
+
+    const imageFilesBefore = product.allVideos ? product.allVideos.split(",") : [];
+
+    // Delete old images
+    imageFilesBefore.forEach((filename) => {
+      const filePath = `public/eventProductImages/${filename}`;
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error('Error deleting image file:', err);
+        }
+      });
+    });
+
+    // Handle the uploaded files in req.files
+    const updatedImages = req.files.map(file => file.filename);
+
+    // Compare filenames before and after unlinking
+    const removedImages = imageFilesBefore.filter(filename => !updatedImages.includes(filename));
+
+    // Your logic to update the related images in the database goes here
+    if (removedImages.length > 0) {
+      const sqlUpdate = `UPDATE eventproducts SET allVideos = ? WHERE id = ?`;
+      const newImageFiles = updatedImages.join(",");
+    
+      connection.query(sqlUpdate, [newImageFiles, productId], function(updateErr, updateResult) {
+        if (updateErr) {
+          console.error('Error updating database with new image filenames:', updateErr);
+          res.status(500).send('Error updating database with new image filenames');
+          return;
+        }
+
+        // Send a response indicating success
+        res.status(200).json({ message: 'AllRelatedVideos images updated successfully' });
+      });
+    } else {
+      // Send a response indicating success without updating the database
+      res.status(200).json({ message: 'AllRelatedVideos images updated successfully' });
+    }
+  });
+});
+
+
+//This part to make the api to update the Instruction Videos
+router.put('/eventProductImages/updateInstructionVideos/:id', upload.array('videos', 10), (req, res) => {
+  const productId = req.params.id;
+  const sqlSelect = `SELECT * FROM eventproducts WHERE id = ?`;
+
+  connection.query(sqlSelect, [productId], function(err, rows) {
+    if (err) {
+      console.error('Error retrieving mall product:', err);
+      res.status(500).send('Error retrieving mall product');
+      return;
+    }
+
+    if (rows.length === 0) {
+      res.status(404).send('Event product not found');
+      return;
+    }
+
+    const product = rows[0];
+
+    const imageFilesBefore = product.allInstructionsVideos ? product.allInstructionsVideos.split(",") : [];
+
+    // Delete old images
+    imageFilesBefore.forEach((filename) => {
+      const filePath = `public/eventProductImages/${filename}`;
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error('Error deleting image file:', err);
+        }
+      });
+    });
+
+    // Handle the uploaded files in req.files
+    const updatedImages = req.files.map(file => file.filename);
+
+  
+
+    // Compare filenames before and after unlinking
+    const removedImages = imageFilesBefore.filter(filename => !updatedImages.includes(filename));
+
+    // Your logic to update the related images in the database goes here
+    if (removedImages.length > 0) {
+      const sqlUpdate = `UPDATE eventproducts SET allInstructionsVideos = ? WHERE id = ?`;
+      const newImageFiles = updatedImages.join(",");
+    
+      connection.query(sqlUpdate, [newImageFiles, productId], function(updateErr, updateResult) {
+        if (updateErr) {
+          console.error('Error updating database with new image filenames:', updateErr);
+          res.status(500).send('Error updating database with new image filenames');
+          return;
+        }
+
+        // Send a response indicating success
+        res.status(200).json({ message: 'InstructionsVideos images updated successfully' });
+      });
+    } else {
+      // Send a response indicating success without updating the database
+      res.status(200).json({ message: 'InstructionsVideos images updated successfully' });
+    }
+  });
+});
 
   
 
@@ -584,8 +755,6 @@ router.delete('/eventProducts/delete/:id', (req, res) => {
         res.status(500).send('Error deleting Event Product from database');
         return;
       }
-
-      console.log('Event Product deleted successfully');
       res.json(result);
     });
   });
