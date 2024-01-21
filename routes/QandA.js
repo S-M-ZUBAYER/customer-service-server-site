@@ -72,6 +72,102 @@ router.post('/QandAnswers/add',(req,res)=>{
     });
 
 
+//create the route and make api to update about, date, time
+
+    router.put('/about/update', (req, res)=>{
+    
+      const {about,date,time} = req.body;
+      
+      let sql = `UPDATE about SET about='${about}',date='${date}', time='${time}' WHERE id=1`;
+      connection.query(sql, [req.params.id],  function(err, result){
+         if (err) throw err;
+         console.log("About information successfully updated", result);
+         res.json(result);;
+      });
+     
+    });
+
+
+    //create the route and function to get the about information 
+    router.get('/about', (req, res) => {
+      const id = req.params.id;
+    
+      const query = `SELECT * FROM about WHERE id = 1`;
+      
+      connection.query(query, (error, results) => {
+        if (results && results.length > 0) {
+          res.json(results);
+        } else {
+          console.error('Error executing query:', error);
+          res.status(500).json({ error: 'An error occurred or no results found' });
+        } 
+      });
+    });
+    
+
+
+//create the route and make api to update about, date, time
+
+    router.put('/helpCenter/update', (req, res)=>{
+    
+      const {helpCenter,date,time} = req.body;
+      
+      let sql = `UPDATE helpCenter SET helpCenter='${helpCenter}',date='${date}', time='${time}' WHERE id=1`;
+      connection.query(sql, [req.params.id],  function(err, result){
+         if (err) throw err;
+         console.log("Help Center information successfully updated", result);
+         res.json(result);;
+      });
+     
+    });
+
+//create the route and function to get the about information 
+router.get('/helpCenter', (req, res) => {
+  const id = req.params.id;
+
+  const query = `SELECT * FROM helpCenter WHERE id = 1`;
+  
+  connection.query(query, (error, results) => {
+    if (results && results.length > 0) {
+      res.json(results);
+    } else {
+      console.error('Error executing query:', error);
+      res.status(500).json({ error: 'An error occurred or no results found' });
+    } 
+  });
+});
+
+
+//create the route and make api to Help Center about, date, time
+
+    router.put('/businessCooperation/update', (req, res)=>{
+    
+      const {businessCooperation,date,time} = req.body;
+      let sql = `UPDATE businessCooperation SET businessCooperation='${businessCooperation}',date='${date}', time='${time}' WHERE id=1`;
+      connection.query(sql, [req.params.id],  function(err, result){
+         if (err) throw err;
+         console.log("Business Cooperation information successfully updated", result);
+         res.json(result);;
+      });
+     
+    });
+
+//create the route and function to get the Business Cooperation information 
+router.get('/businessCooperation', (req, res) => {
+  const id = req.params.id;
+
+  const query = `SELECT * FROM businessCooperation WHERE id = 1`;
+  
+  connection.query(query, (error, results) => {
+    if (results && results.length > 0) {
+      res.json(results);
+    } else {
+      console.error('Error executing query:', error);
+      res.status(500).json({ error: 'An error occurred or no results found' });
+    } 
+  });
+});
+
 
 //create the route and function to add delete specific Question answer according to the id
     
