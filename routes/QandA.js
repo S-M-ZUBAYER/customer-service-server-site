@@ -4,6 +4,7 @@ const express =require("express");
 const connection = require("../config/db");
 const router=express.Router();
 const cors = require('cors');
+const requestIP = require('request-ip');
 
 const app=express();
 app.use(cors());
@@ -180,6 +181,15 @@ router.delete('/QandAnswers/delete/:id', (req, res)=>{
   });
 });
 
+router.get('/detectIP',function(req, res) {
+  const parseIp = (req) =>
+  req.headers['x-forwarded-for']?.split(',').shift()
+  || req.socket?.remoteAddress
+
+console.log(parseIp(req))
+  const ipAddress = requestIP.getClientIp(req);
+  res.send(ipAddress)
+});
 
 
 
