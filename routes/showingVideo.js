@@ -47,7 +47,7 @@ const upload = multer({
 
 
 router.post('/showingVideo/add', upload.single('showingVideo'), (req, res) => {
-    const { title } = req.body;
+    const { title,country } = req.body;
   
     // Check if there is an uploaded file
     if (!req.file) {
@@ -59,15 +59,17 @@ router.post('/showingVideo/add', upload.single('showingVideo'), (req, res) => {
   
     // Construct the data to be inserted into the database
     const showingVideoData = {
+      country,
       title,
       showingVideo: showingVideo ? showingVideo.filename : null,
     };
   
     // Insert the data into the database
     connection.query(
-      'INSERT INTO showingVideos (title, showingVideo, imgPath) VALUES (?, ?, ?)',
+      'INSERT INTO showingVideos (title,countryName, showingVideo, imgPath) VALUES (?, ?, ?, ?)',
       [
         title,
+        country,
         showingVideo.filename,
         'https://grozziieget.zjweiting.com:8033/tht/showingVideos/',
       ],
@@ -102,6 +104,29 @@ router.get('/showingVideo', (req, res) => {
           }
         }
       }
+    );
+  });
+
+  router.get('/showingVideo/:country', (req, res) => {
+    const { country } = req.params;
+  
+    // Query the database to retrieve color images based on the model number
+    connection.query(
+        'SELECT * FROM showingVideos WHERE countryName = ?',
+        [country],
+        (error, results) => {
+            if (error) {
+                console.error('Error retrieving showing video:', error);
+                res.status(500).json({ status: 'error', message: 'Error retrieving showing video' });
+            } else {
+                // Check if any color images were found
+                if (results.length === 0) {
+                    res.status(404).json({ status: 'not found', message: 'showing video not found for the given model number' });
+                } else {
+                    res.status(200).json({ status: 'success', data: results });
+                }
+            }
+        }
     );
   });
   
