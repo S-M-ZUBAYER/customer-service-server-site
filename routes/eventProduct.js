@@ -61,6 +61,23 @@ router.get('/eventProducts', (req, res) => {
   });
 });
 
+router.get('/eventProducts/slideImageSearch', (req, res) => {
+  const { slideImageMark } = req.body;
+
+  connection.query(
+    'SELECT * FROM eventproducts WHERE slideImageMark = ?',
+    [slideImageMark],
+    (error, results) => {
+      if (error) {
+        console.error('Error retrieving products:', error);
+        res.status(500).send('Error retrieving products');
+      } else {
+        res.json(results);
+      }
+    }
+  );
+});
+
 router.get('/eventProducts/:productName', (req, res) => {
   const productName = req.params.productName;
 
@@ -112,7 +129,7 @@ router.get('/eventProducts/country/:productCountryName', (req, res) => {
 
 
 
-router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFiles' }, { name: 'images' },{ name: 'descriptionImages' }, { name: 'videos' }, { name: 'instructionsImages' }, { name: 'instructionsVideos' }]), (req, res) => {
+router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFiles' }, { name: 'images' }, { name: 'descriptionImages' }, { name: 'videos' }, { name: 'instructionsImages' }, { name: 'instructionsVideos' }]), (req, res) => {
 
   // get the data from frontend
   const {
@@ -135,15 +152,18 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
     afterSalesInstruction,
     inventoryText,
     date,
-    time
+    time,
+    link,
+    mark,
+    slideImageMark
   } = req.body;
 
-  
+
   const productImgFile = req.files['productImg'];
   const productImg = productImgFile ? productImgFile[0] : null;
-  const imgPath='https://grozziieget.zjweiting.com:8033/tht/eventProductImages'
+  const imgPath = 'https://grozziieget.zjweiting.com:8033/tht/eventProductImages'
 
-//create a object for all available data
+  //create a object for all available data
   const product = {
     productCountryName,
     productName,
@@ -166,9 +186,14 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
     inventoryText,
     productImg: productImg ? productImg.filename : null,
     date,
-    time
+    time,
+    link,
+    mark,
+    slideImageMark
 
   };
+
+
   const allImages = req.files['images'];
   const allDescriptionImages = req.files['descriptionImages'];
   const allVideos = req.files['videos'];
@@ -191,7 +216,7 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
   if (allVideos && allVideos.length > 0) {
     product.allVideos = allVideos.map((file) => file.filename);
   }
-  
+
   // Check if files are present
   if (allInstructionsImages && allInstructionsImages.length > 0) {
     product.allInstructionsImages = allInstructionsImages.map((file) => file.filename);
@@ -200,10 +225,10 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
   if (allInstructionsVideos && allInstructionsVideos.length > 0) {
     product.allInstructionsVideos = allInstructionsVideos.map((file) => file.filename);
   }
-  
+
 
   connection.query(
-    'INSERT INTO eventproducts (productCountryName, productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity,imgPath, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark,descriptionImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages,allDescriptionImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time) VALUES (?,?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO eventproducts (productCountryName, productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity,imgPath, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark,descriptionImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages,allDescriptionImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time,link,mark,slideImageMark) VALUES (?,?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?)',
     [
       productCountryName,
       productName,
@@ -230,10 +255,12 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
       allDescriptionImages && Array.isArray(allDescriptionImages) ? allDescriptionImages.map((file) => file.filename).join(',') : null,
       allVideos && Array.isArray(allVideos) ? allVideos.map((file) => file.filename).join(',') : null,
       allInstructionsImages && Array.isArray(allInstructionsImages) ? allInstructionsImages.map((file) => file.filename).join(',') : null,
-     allInstructionsVideos && Array.isArray(allInstructionsVideos) ? allInstructionsVideos.map((file) => file.filename).join(',') : null,
-      
+      allInstructionsVideos && Array.isArray(allInstructionsVideos) ? allInstructionsVideos.map((file) => file.filename).join(',') : null,
       date,
-      time
+      time,
+      link,
+      mark,
+      slideImageMark
     ],
     (error, results) => {
       if (error) {
@@ -253,55 +280,55 @@ router.post('/eventProducts/add', upload.fields([{ name: 'productImg' }, { name:
 //create the route and function to update a specific event product information
 
 router.put('/eventProductImages/update/:id', upload.single('newProductImg'), (req, res) => {
- 
+
 
   const {
-      productName,
-      oldImg,
-      productPrice,
-      productDescription,
-      modelNumber,
-      printerColor,
-      connectorType,
-      stockQuantity,
-      shelfStartTime,
-      shelfEndTime,
-      afterSalesText,
-      afterSalesInstruction,
-      inventoryText,
+    productName,
+    oldImg,
+    productPrice,
+    productDescription,
+    modelNumber,
+    printerColor,
+    connectorType,
+    stockQuantity,
+    shelfStartTime,
+    shelfEndTime,
+    afterSalesText,
+    afterSalesInstruction,
+    inventoryText,
   } = JSON.parse(req.body.updatedProduct);
 
   const productImgFile = req.file;
   const imgFilePath = `public/eventProductImages/${oldImg}`;
   fs.unlink(imgFilePath, (err) => {
-      if (err) {
-          console.error('Error deleting image file:', err);
-      }
+    if (err) {
+      console.error('Error deleting image file:', err);
+    }
   });
 
   const productImg = productImgFile ? productImgFile.filename : null;
 
   const product = {
-      productName,
-      productPrice,
-      productDescription,
-      modelNumber,
-      printerColor,
-      connectorType,
-      stockQuantity,
-      shelfStartTime,
-      shelfEndTime,
-      afterSalesText,
-      afterSalesInstruction,
-      inventoryText,
-      productImg,
+    productName,
+    productPrice,
+    productDescription,
+    modelNumber,
+    printerColor,
+    connectorType,
+    stockQuantity,
+    shelfStartTime,
+    shelfEndTime,
+    afterSalesText,
+    afterSalesInstruction,
+    inventoryText,
+    productImg,
   };
 
   let sql = `UPDATE eventproducts SET productName='${productName}', productPrice='${productPrice}', productDescription='${productDescription}', modelNumber='${modelNumber}', printerColor='${printerColor}', connectorType='${connectorType}', stockQuantity='${stockQuantity}', shelfStartTime='${shelfStartTime}', shelfEndTime='${shelfEndTime}', afterSalesText='${afterSalesText}', afterSalesInstruction='${afterSalesInstruction}', inventoryText='${inventoryText}', productImg='${productImg}' WHERE id=?`;
 
   connection.query(sql, [req.params.id], function (err, result) {
-      if (err) throw err;
-      res.json(result);
+    if (err) throw err;
+    res.json(result);
   });
 });
 
@@ -319,9 +346,12 @@ router.put('/eventProductImages/update/textInformation/:id', (req, res) => {
     afterSalesText,
     afterSalesInstruction,
     inventoryText,
-} = req.body.updatedProduct;
+    link,
+    mark,
+    slideImageMark
+  } = req.body.updatedProduct;
 
-const product = {
+  const product = {
     productName,
     productPrice,
     productDescription,
@@ -334,18 +364,21 @@ const product = {
     afterSalesText,
     afterSalesInstruction,
     inventoryText,
-};
+    link,
+    mark,
+    slideImageMark
+  };
 
-let sql = `UPDATE eventproducts SET productName=?, productPrice=?, productDescription=?, modelNumber=?, printerColor=?, connectorType=?, stockQuantity=?, shelfStartTime=?, shelfEndTime=?, afterSalesText=?, afterSalesInstruction=?, inventoryText=? WHERE id=?`;
+  let sql = `UPDATE eventproducts SET productName=?, productPrice=?, productDescription=?, modelNumber=?, printerColor=?, connectorType=?, stockQuantity=?, shelfStartTime=?, shelfEndTime=?, afterSalesText=?, afterSalesInstruction=?, inventoryText=?,link=?,mark=?,slideImageMark=? WHERE id=?`;
 
-connection.query(sql, [productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, req.params.id], function (err, result) {
+  connection.query(sql, [productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, link, mark, slideImageMark, req.params.id], function (err, result) {
     if (err) {
-        console.error('Error updating database:', err);
-        res.status(500).send('Error updating database');
-        return;
+      console.error('Error updating database:', err);
+      res.status(500).send('Error updating database');
+      return;
     }
     res.json(result);
-});
+  });
 });
 
 
@@ -353,7 +386,7 @@ router.put('/eventProductImages/updateRelatedImages/:id', upload.array('images',
   const productId = req.params.id;
   const sqlSelect = `SELECT * FROM eventproducts WHERE id = ?`;
 
-  connection.query(sqlSelect, [productId], function(err, rows) {
+  connection.query(sqlSelect, [productId], function (err, rows) {
     if (err) {
       console.error('Error retrieving event product:', err);
       res.status(500).send('Error retrieving event product');
@@ -389,8 +422,8 @@ router.put('/eventProductImages/updateRelatedImages/:id', upload.array('images',
     if (removedImages.length > 0) {
       const sqlUpdate = `UPDATE eventproducts SET allImages = ? WHERE id = ?`;
       const newImageFiles = updatedImages.join(",");
-    
-      connection.query(sqlUpdate, [newImageFiles, productId], function(updateErr, updateResult) {
+
+      connection.query(sqlUpdate, [newImageFiles, productId], function (updateErr, updateResult) {
         if (updateErr) {
           console.error('Error updating database with new image filenames:', updateErr);
           res.status(500).send('Error updating database with new image filenames');
@@ -412,7 +445,7 @@ router.put('/eventProductImages/updateDescriptionImage/:id', upload.array('image
   const productId = req.params.id;
   const sqlSelect = `SELECT * FROM eventproducts WHERE id = ?`;
 
-  connection.query(sqlSelect, [productId], function(err, rows) {
+  connection.query(sqlSelect, [productId], function (err, rows) {
     if (err) {
       console.error('Error retrieving event product:', err);
       res.status(500).send('Error retrieving event product');
@@ -448,8 +481,8 @@ router.put('/eventProductImages/updateDescriptionImage/:id', upload.array('image
     if (removedImages.length > 0) {
       const sqlUpdate = `UPDATE eventproducts SET allDescriptionImages = ? WHERE id = ?`;
       const newImageFiles = updatedImages.join(",");
-    
-      connection.query(sqlUpdate, [newImageFiles, productId], function(updateErr, updateResult) {
+
+      connection.query(sqlUpdate, [newImageFiles, productId], function (updateErr, updateResult) {
         if (updateErr) {
           console.error('Error updating database with new image filenames:', updateErr);
           res.status(500).send('Error updating database with new image filenames');
@@ -528,7 +561,7 @@ router.put('/eventProductImages/updateRelatedVideos/:id', upload.array('videos',
   const sqlSelect = `SELECT * FROM eventproducts WHERE id = ?`;
 
 
-  connection.query(sqlSelect, [productId], function(err, rows) {
+  connection.query(sqlSelect, [productId], function (err, rows) {
     if (err) {
       console.error('Error retrieving mall product:', err);
       res.status(500).send('Error retrieving mall product');
@@ -564,8 +597,8 @@ router.put('/eventProductImages/updateRelatedVideos/:id', upload.array('videos',
     if (removedVideos.length > 0 || updatedVideos.length > 0) {
       const sqlUpdate = `UPDATE eventproducts SET allVideos = ? WHERE id = ?`;
       const newVideoFiles = updatedVideos.join(",");
-    
-      connection.query(sqlUpdate, [newVideoFiles, productId], function(updateErr, updateResult) {
+
+      connection.query(sqlUpdate, [newVideoFiles, productId], function (updateErr, updateResult) {
         if (updateErr) {
           console.error('Error updating database with new video filenames:', updateErr);
           res.status(500).send('Error updating database with new video filenames');
@@ -586,9 +619,8 @@ router.put('/eventProductImages/updateRelatedVideos/:id', upload.array('videos',
 router.put('/eventProductImages/updateInstructionVideos/:id', upload.array('videos', 10), (req, res) => {
   const productId = req.params.id;
   const sqlSelect = `SELECT * FROM eventproducts WHERE id = ?`;
-console.log("check")
 
-  connection.query(sqlSelect, [productId], function(err, rows) {
+  connection.query(sqlSelect, [productId], function (err, rows) {
     if (err) {
       console.error('Error retrieving mall product:', err);
       res.status(500).send('Error retrieving mall product');
@@ -624,8 +656,8 @@ console.log("check")
     if (removedVideos.length > 0 || updatedVideos.length > 0) {
       const sqlUpdate = `UPDATE eventproducts SET allInstructionsVideos = ? WHERE id = ?`;
       const newVideoFiles = updatedVideos.join(",");
-    
-      connection.query(sqlUpdate, [newVideoFiles, productId], function(updateErr, updateResult) {
+
+      connection.query(sqlUpdate, [newVideoFiles, productId], function (updateErr, updateResult) {
         if (updateErr) {
           console.error('Error updating database with new video filenames:', updateErr);
           res.status(500).send('Error updating database with new video filenames');
@@ -643,7 +675,7 @@ console.log("check")
 });
 
 
-  
+
 
 //create the route and function to delete event product according to the id
 
@@ -651,7 +683,7 @@ router.delete('/eventProducts/delete/:id', (req, res) => {
   const productId = req.params.id;
 
   const sql = `SELECT * FROM eventproducts WHERE id = ?`;
-  connection.query(sql, [productId], function(err, rows) {
+  connection.query(sql, [productId], function (err, rows) {
     if (err) {
       console.error('Error retrieving event product:', err);
       res.status(500).send('Error retrieving event product');
@@ -664,9 +696,9 @@ router.delete('/eventProducts/delete/:id', (req, res) => {
     }
 
     const product = rows[0];
-  
 
-     // Delete associated main images
+
+    // Delete associated main images
     const imgFilePath = `public/eventProductImages/${product.productImg}`;
     fs.unlink(imgFilePath, (err) => {
       if (err) {
@@ -710,7 +742,7 @@ router.delete('/eventProducts/delete/:id', (req, res) => {
     });
 
     // Delete associated videos
-    const videoFiles = product.allVideos ? (product.allVideos).split(","): [];
+    const videoFiles = product.allVideos ? (product.allVideos).split(",") : [];
     videoFiles.forEach((filename) => {
       const filePath = `public/eventProductImages/${filename}`;
       fs.unlink(filePath, (err) => {
@@ -720,7 +752,7 @@ router.delete('/eventProducts/delete/:id', (req, res) => {
       });
     });
 
-    const instructionsVideoFiles =product.instructionsVideos ? (product.instructionsVideos).split(",") : [];
+    const instructionsVideoFiles = product.instructionsVideos ? (product.instructionsVideos).split(",") : [];
     instructionsVideoFiles.forEach((filename) => {
       const filePath = `public/eventProductImages/${filename}`;
       fs.unlink(filePath, (err) => {
@@ -731,8 +763,8 @@ router.delete('/eventProducts/delete/:id', (req, res) => {
     });
 
     // Delete associated files
-    const invoiceFiles = product.invoiceFile ? (product.invoiceFile).split(","): [];
-  
+    const invoiceFiles = product.invoiceFile ? (product.invoiceFile).split(",") : [];
+
     invoiceFiles.forEach((filename) => {
       const filePath = `public/eventProductImages/${filename}`;
       fs.unlink(filePath, (err) => {
@@ -743,7 +775,7 @@ router.delete('/eventProducts/delete/:id', (req, res) => {
     });
 
     const deleteSql = `DELETE FROM eventproducts WHERE id = ?`;
-    connection.query(deleteSql, [productId], function(err, result) {
+    connection.query(deleteSql, [productId], function (err, result) {
       if (err) {
         console.error('Error deleting Event Product from database:', err);
         res.status(500).send('Error deleting Event Product from database');

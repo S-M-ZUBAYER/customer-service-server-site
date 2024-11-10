@@ -9,7 +9,7 @@ const app = express();
 app.use(cors());
 
 // import multer from "multer" to upload file in backend
-const multer = require("multer") 
+const multer = require("multer")
 
 // import path from "path" to get the specific path of any file
 const path = require("path")
@@ -55,6 +55,20 @@ router.get('/mallProducts', (req, res) => {
     if (error) {
       console.error('Error retrieving products:', error);
       res.status(500).send('Error retrieving products');
+    } else {
+      res.json(results);
+    }
+  });
+
+});
+
+//create get request to get Shopify all mark link information
+router.get('/mallProducts/showShopify', (req, res) => {
+
+  connection.query('SELECT * FROM shopifyMarkLink', (error, results) => {
+    if (error) {
+      console.error('Error retrieving shopify mark link', error);
+      res.status(500).send('Error retrieving shopify mark link');
     } else {
       res.json(results);
     }
@@ -112,10 +126,32 @@ router.get('/mallProducts/country/:productCountryName', (req, res) => {
 });
 
 
+// //create post request to create Shopify all mark link information
+
+router.post('/mallProducts/ShopifyLinkMark/add', (req, res) => {
+  const { link, mark } = req.body;
+
+  const dataToStore = {
+    link,
+    mark
+  };
+
+  let sql = `INSERT INTO shopifyMarkLink (link,mark) VALUES (?,?)`;
+
+  connection.query(sql, [dataToStore.link, dataToStore.mark], function (err, result) {
+    if (err) {
+      console.error("Error inserting data:", err);
+      res.status(500).json({ error: "An error occurred while inserting data." });
+    } else {
+      console.log("Successfully inserted data", result);
+      res.json(result);
+    }
+  });
+});
 
 //create the route and function to add all the information of mall product to store in database 
 
-router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFiles' }, { name: 'images' },{ name: 'descriptionImages' }, { name: 'videos' }, { name: 'instructionsImages' }, { name: 'instructionsVideos' }]), (req, res) => {
+router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 'invoiceFiles' }, { name: 'images' }, { name: 'descriptionImages' }, { name: 'videos' }, { name: 'instructionsImages' }, { name: 'instructionsVideos' }]), (req, res) => {
   // get the data from frontend
   const {
     productCountryName,
@@ -137,15 +173,17 @@ router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 
     afterSalesInstruction,
     inventoryText,
     date,
-    time
+    time,
+    link,
+    mark
   } = req.body;
 
-  
+
   const productImgFile = req.files['productImg'];
   const productImg = productImgFile ? productImgFile[0] : null;
-  const imgPath='https://grozziieget.zjweiting.com:8033/tht/mallProductImages'
+  const imgPath = 'https://grozziieget.zjweiting.com:8033/tht/mallProductImages'
 
-//create a object for all available data
+  //create a object for all available data
   const product = {
     productCountryName,
     productName,
@@ -168,10 +206,12 @@ router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 
     productImg: productImg ? productImg.filename : null,
     imgPath,
     date,
-    time
+    time,
+    link,
+    mark
 
   };
- 
+
   const allImages = req.files['images'];
   const allDescriptionImages = req.files['descriptionImages'];
   const allVideos = req.files['videos'];
@@ -194,7 +234,7 @@ router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 
   if (allVideos && allVideos.length > 0) {
     product.allVideos = allVideos.map((file) => file.filename);
   }
-  
+
   // Check if files are present
   if (allInstructionsImages && allInstructionsImages.length > 0) {
     product.allInstructionsImages = allInstructionsImages.map((file) => file.filename);
@@ -203,10 +243,10 @@ router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 
   if (allInstructionsVideos && allInstructionsVideos.length > 0) {
     product.allInstructionsVideos = allInstructionsVideos.map((file) => file.filename);
   }
-  
+
 
   connection.query(
-    'INSERT INTO mallproducts (productCountryName, productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity,imgPath, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark,descriptionImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages,allDescriptionImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time) VALUES (?,?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO mallproducts (productCountryName, productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity,imgPath, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark,descriptionImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages,allDescriptionImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time, link, mark) VALUES (?,?,?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [
       productCountryName,
       productName,
@@ -233,10 +273,12 @@ router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 
       allDescriptionImages && Array.isArray(allDescriptionImages) ? allDescriptionImages.map((file) => file.filename).join(',') : null,
       allVideos && Array.isArray(allVideos) ? allVideos.map((file) => file.filename).join(',') : null,
       allInstructionsImages && Array.isArray(allInstructionsImages) ? allInstructionsImages.map((file) => file.filename).join(',') : null,
-     allInstructionsVideos && Array.isArray(allInstructionsVideos) ? allInstructionsVideos.map((file) => file.filename).join(',') : null,
-      
+      allInstructionsVideos && Array.isArray(allInstructionsVideos) ? allInstructionsVideos.map((file) => file.filename).join(',') : null,
+
       date,
-      time
+      time,
+      link,
+      mark
     ],
     (error, results) => {
       if (error) {
@@ -250,6 +292,30 @@ router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 
 });
 
 
+
+// //create post request to create Shopify all mark link information
+router.put('/mallProducts/ShopifyLinkMark/update/:id', (req, res) => {
+  const { id } = req.params;
+  const { link, mark } = req.body;
+
+  const dataToUpdate = {
+    link,
+    mark
+  };
+
+  const sql = `UPDATE shopifyMarkLink SET link = ?, mark = ? WHERE id = ?`;
+
+  connection.query(sql, [dataToUpdate.link, dataToUpdate.mark, id], function (err, result) {
+    if (err) {
+      console.error("Error updating data:", err);
+      res.status(500).json({ error: "An error occurred while updating data." });
+    } else {
+      console.log("Successfully updated data", result);
+      res.json(result);
+    }
+  });
+});
+
 //create the route and function to update a specific mall product information
 
 
@@ -258,95 +324,100 @@ router.post('/mallProducts/add', upload.fields([{ name: 'productImg' }, { name: 
 router.put('/mallProductImages/update/:id', upload.single('newProductImg'), (req, res) => {
 
   const {
-      productName,
-      oldImg,
-      productPrice,
-      productDescription,
-      modelNumber,
-      printerColor,
-      connectorType,
-      stockQuantity,
-      shelfStartTime,
-      shelfEndTime,
-      afterSalesText,
-      afterSalesInstruction,
-      inventoryText,
+    productName,
+    oldImg,
+    productPrice,
+    productDescription,
+    modelNumber,
+    printerColor,
+    connectorType,
+    stockQuantity,
+    shelfStartTime,
+    shelfEndTime,
+    afterSalesText,
+    afterSalesInstruction,
+    inventoryText,
   } = JSON.parse(req.body.updatedProduct);
 
   const productImgFile = req.file;
   const imgFilePath = `public/mallProductImages/${oldImg}`;
   fs.unlink(imgFilePath, (err) => {
-      if (err) {
-          console.error('Error deleting image file:', err);
-      }
+    if (err) {
+      console.error('Error deleting image file:', err);
+    }
   });
 
   const productImg = productImgFile ? productImgFile.filename : null;
 
   const product = {
-      productName,
-      productPrice,
-      productDescription,
-      modelNumber,
-      printerColor,
-      connectorType,
-      stockQuantity,
-      shelfStartTime,
-      shelfEndTime,
-      afterSalesText,
-      afterSalesInstruction,
-      inventoryText,
-      productImg,
+    productName,
+    productPrice,
+    productDescription,
+    modelNumber,
+    printerColor,
+    connectorType,
+    stockQuantity,
+    shelfStartTime,
+    shelfEndTime,
+    afterSalesText,
+    afterSalesInstruction,
+    inventoryText,
+    productImg,
   };
 
   let sql = `UPDATE mallproducts SET productName='${productName}', productPrice='${productPrice}', productDescription='${productDescription}', modelNumber='${modelNumber}', printerColor='${printerColor}', connectorType='${connectorType}', stockQuantity='${stockQuantity}', shelfStartTime='${shelfStartTime}', shelfEndTime='${shelfEndTime}', afterSalesText='${afterSalesText}', afterSalesInstruction='${afterSalesInstruction}', inventoryText='${inventoryText}', productImg='${productImg}' WHERE id=?`;
 
   connection.query(sql, [req.params.id], function (err, result) {
-      if (err) throw err;
-      res.json(result);
+    if (err) throw err;
+    res.json(result);
   });
 });
 
 router.put('/mallProductImages/update/textInformation/:id', (req, res) => {
   const {
-      productName,
-      productPrice,
-      productDescription,
-      modelNumber,
-      printerColor,
-      connectorType,
-      stockQuantity,
-      shelfStartTime,
-      shelfEndTime,
-      afterSalesText,
-      afterSalesInstruction,
-      inventoryText,
+    productName,
+    productPrice,
+    productDescription,
+    modelNumber,
+    printerColor,
+    connectorType,
+    stockQuantity,
+    shelfStartTime,
+    shelfEndTime,
+    afterSalesText,
+    afterSalesInstruction,
+    inventoryText,
+    link,
+    mark
   } = req.body.updatedProduct;
 
   const product = {
-      productName,
-      productPrice,
-      productDescription,
-      modelNumber,
-      printerColor,
-      connectorType,
-      stockQuantity,
-      shelfStartTime,
-      shelfEndTime,
-      afterSalesText,
-      afterSalesInstruction,
-      inventoryText,
+    productName,
+    productPrice,
+    productDescription,
+    modelNumber,
+    printerColor,
+    connectorType,
+    stockQuantity,
+    shelfStartTime,
+    shelfEndTime,
+    afterSalesText,
+    afterSalesInstruction,
+    inventoryText,
+    link,
+    mark
   };
+  console.log(product);
 
-  let sql = `UPDATE mallproducts SET productName=?, productPrice=?, productDescription=?, modelNumber=?, printerColor=?, connectorType=?, stockQuantity=?, shelfStartTime=?, shelfEndTime=?, afterSalesText=?, afterSalesInstruction=?, inventoryText=? WHERE id=?`;
+  let sql = `UPDATE mallproducts SET productName=?, productPrice=?, productDescription=?, modelNumber=?, printerColor=?, connectorType=?, stockQuantity=?, shelfStartTime=?, shelfEndTime=?, afterSalesText=?, afterSalesInstruction=?, inventoryText=?, link=?, mark=? WHERE id=?`;
 
-  connection.query(sql, [productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, req.params.id], function (err, result) {
-      if (err) {
-          console.error('Error updating database:', err);
-          res.status(500).send('Error updating database');
-          return;
-      }
-      res.json(result);
+  connection.query(sql, [productName, productPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, link, mark, req.params.id], function (err, result) {
+    if (err) {
+      console.error('Error updating database:', err);
+      res.status(500).send('Error updating database');
+      return;
+    }
+    res.json(result);
   });
 });
 
@@ -358,7 +429,7 @@ router.put('/mallProductImages/updateRelatedImages/:id', upload.array('images', 
   const productId = req.params.id;
   const sqlSelect = `SELECT * FROM mallproducts WHERE id = ?`;
 
-  connection.query(sqlSelect, [productId], function(err, rows) {
+  connection.query(sqlSelect, [productId], function (err, rows) {
     if (err) {
       console.error('Error retrieving mall product:', err);
       res.status(500).send('Error retrieving mall product');
@@ -395,8 +466,8 @@ router.put('/mallProductImages/updateRelatedImages/:id', upload.array('images', 
     if (removedImages.length > 0) {
       const sqlUpdate = `UPDATE mallproducts SET allImages = ? WHERE id = ?`;
       const newImageFiles = updatedImages.join(",");
-    
-      connection.query(sqlUpdate, [newImageFiles, productId], function(updateErr, updateResult) {
+
+      connection.query(sqlUpdate, [newImageFiles, productId], function (updateErr, updateResult) {
         if (updateErr) {
           console.error('Error updating database with new image filenames:', updateErr);
           res.status(500).send('Error updating database with new image filenames');
@@ -414,11 +485,12 @@ router.put('/mallProductImages/updateRelatedImages/:id', upload.array('images', 
 });
 
 
+
 router.put('/mallProductImages/updateDescriptionImage/:id', upload.array('images', 10), (req, res) => {
   const productId = req.params.id;
   const sqlSelect = `SELECT * FROM mallproducts WHERE id = ?`;
 
-  connection.query(sqlSelect, [productId], function(err, rows) {
+  connection.query(sqlSelect, [productId], function (err, rows) {
     if (err) {
       console.error('Error retrieving mall product:', err);
       res.status(500).send('Error retrieving mall product');
@@ -455,8 +527,8 @@ router.put('/mallProductImages/updateDescriptionImage/:id', upload.array('images
     if (removedImages.length > 0) {
       const sqlUpdate = `UPDATE mallproducts SET allDescriptionImages = ? WHERE id = ?`;
       const newImageFiles = updatedImages.join(",");
-    
-      connection.query(sqlUpdate, [newImageFiles, productId], function(updateErr, updateResult) {
+
+      connection.query(sqlUpdate, [newImageFiles, productId], function (updateErr, updateResult) {
         if (updateErr) {
           console.error('Error updating database with new image filenames:', updateErr);
           res.status(500).send('Error updating database with new image filenames');
@@ -533,7 +605,7 @@ router.put('/mallProductImages/updateInstructionVideos/:id', upload.array('video
   const productId = req.params.id;
   const sqlSelect = `SELECT * FROM mallproducts WHERE id = ?`;
 
-  connection.query(sqlSelect, [productId], function(err, rows) {
+  connection.query(sqlSelect, [productId], function (err, rows) {
     if (err) {
       console.error('Error retrieving mall product:', err);
       res.status(500).send('Error retrieving mall product');
@@ -569,8 +641,8 @@ router.put('/mallProductImages/updateInstructionVideos/:id', upload.array('video
     if (removedVideos.length > 0 || updatedVideos.length > 0) {
       const sqlUpdate = `UPDATE mallproducts SET allInstructionsVideos = ? WHERE id = ?`;
       const newVideoFiles = updatedVideos.join(",");
-    
-      connection.query(sqlUpdate, [newVideoFiles, productId], function(updateErr, updateResult) {
+
+      connection.query(sqlUpdate, [newVideoFiles, productId], function (updateErr, updateResult) {
         if (updateErr) {
           console.error('Error updating database with new video filenames:', updateErr);
           res.status(500).send('Error updating database with new video filenames');
@@ -595,7 +667,7 @@ router.put('/mallProductImages/updateRelatedVideos/:id', upload.array('videos', 
   const sqlSelect = `SELECT * FROM mallproducts WHERE id = ?`;
 
 
-  connection.query(sqlSelect, [productId], function(err, rows) {
+  connection.query(sqlSelect, [productId], function (err, rows) {
     if (err) {
       console.error('Error retrieving mall product:', err);
       res.status(500).send('Error retrieving mall product');
@@ -631,8 +703,8 @@ router.put('/mallProductImages/updateRelatedVideos/:id', upload.array('videos', 
     if (removedVideos.length > 0 || updatedVideos.length > 0) {
       const sqlUpdate = `UPDATE mallproducts SET allVideos = ? WHERE id = ?`;
       const newVideoFiles = updatedVideos.join(",");
-    
-      connection.query(sqlUpdate, [newVideoFiles, productId], function(updateErr, updateResult) {
+
+      connection.query(sqlUpdate, [newVideoFiles, productId], function (updateErr, updateResult) {
         if (updateErr) {
           console.error('Error updating database with new video filenames:', updateErr);
           res.status(500).send('Error updating database with new video filenames');
@@ -652,14 +724,14 @@ router.put('/mallProductImages/updateRelatedVideos/:id', upload.array('videos', 
 
 
 
-  
+
 //create the route and function to delete a mall product according to the id  all
 
 router.delete('/mallProducts/delete/:id', (req, res) => {
   const productId = req.params.id;
 
   const sql = `SELECT * FROM mallproducts WHERE id = ?`;
-  connection.query(sql, [productId], function(err, rows) {
+  connection.query(sql, [productId], function (err, rows) {
     if (err) {
       console.error('Error retrieving mall product:', err);
       res.status(500).send('Error retrieving mall product');
@@ -672,9 +744,9 @@ router.delete('/mallProducts/delete/:id', (req, res) => {
     }
 
     const product = rows[0];
-  
 
-     // Delete associated main images
+
+    // Delete associated main images
     const imgFilePath = `public/mallProductImages/${product.productImg}`;
     fs.unlink(imgFilePath, (err) => {
       if (err) {
@@ -718,7 +790,7 @@ router.delete('/mallProducts/delete/:id', (req, res) => {
     });
 
     // Delete associated videos
-    const videoFiles = product.allVideos ? (product.allVideos).split(","): [];
+    const videoFiles = product.allVideos ? (product.allVideos).split(",") : [];
     videoFiles.forEach((filename) => {
       const filePath = `public/mallProductImages/${filename}`;
       fs.unlink(filePath, (err) => {
@@ -728,7 +800,7 @@ router.delete('/mallProducts/delete/:id', (req, res) => {
       });
     });
 
-    const instructionsVideoFiles =product.instructionsVideos ? (product.instructionsVideos).split(",") : [];
+    const instructionsVideoFiles = product.instructionsVideos ? (product.instructionsVideos).split(",") : [];
     instructionsVideoFiles.forEach((filename) => {
       const filePath = `public/mallProductImages/${filename}`;
       fs.unlink(filePath, (err) => {
@@ -739,8 +811,8 @@ router.delete('/mallProducts/delete/:id', (req, res) => {
     });
 
     // Delete associated files
-    const invoiceFiles = product.invoiceFile ? (product.invoiceFile).split(","): [];
-  
+    const invoiceFiles = product.invoiceFile ? (product.invoiceFile).split(",") : [];
+
     invoiceFiles.forEach((filename) => {
       const filePath = `public/mallProductImages/${filename}`;
       fs.unlink(filePath, (err) => {
@@ -751,7 +823,7 @@ router.delete('/mallProducts/delete/:id', (req, res) => {
     });
 
     const deleteSql = `DELETE FROM mallproducts WHERE id = ?`;
-    connection.query(deleteSql, [productId], function(err, result) {
+    connection.query(deleteSql, [productId], function (err, result) {
       if (err) {
         console.error('Error deleting mall product from database:', err);
         res.status(500).send('Error deleting mall product from database');

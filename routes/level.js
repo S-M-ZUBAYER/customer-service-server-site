@@ -331,19 +331,18 @@ router.get('/mainContainers/:subCategories', (req, res) => {
 // Get a MainContainer by its mainContainersID 
 router.get('/mainContainers/get/main/:id', (req, res) => {
   const id = req.params.id;
-  console.log(id, "skjdf")
 
   let sql = `SELECT id, containerName, containerHeight, containerWidth, convert(containerImageBitmapData using utf8) AS containerImageBitmapData, subCategories,printerType FROM maincontainertable WHERE id = ?`;
 
   connection.query(sql, [id], function (err, results) {
     if (err) {
       console.error("Error fetching data:", err);
-      res.status(500).json({ error: "An error occurred while fetching data." });
+      res.json({ message: "An error occurred while fetching data.", data: id });
     } else {
       if (results.length > 0) {
         res.json(results);
       } else {
-        res.status(404).json({ error: "No data found for the given subcategory." });
+        res.json({ message: "No data found for the given subcategory.", data: id });
       }
     }
   });
@@ -368,19 +367,21 @@ router.get('/mainContainers', (req, res) => {
 router.delete('/mainContainers/delete/:id', (req, res) => {
   const mainContainersId = req.params.id;
 
-  let sql = ('DELETE main, widget FROM maincontainertable main LEFT JOIN widgetcontainertable widget ON main.id = widget.mainContainerId WHERE main.id = ?');
-
+  let sql = 'DELETE main, widget FROM maincontainertable main LEFT JOIN widgetcontainertable widget ON main.id = widget.mainContainerId WHERE main.id = ?';
 
   connection.query(sql, [mainContainersId], function (err, results) {
     if (err) {
-      console.error("Error fetching all data:", err);
-      res.status(500).json({ error: "An error occurred while fetching all data." });
-    } else {
-      console.log("Successfully fetched all data", results);
-      res.json(results);
+      return res.json({ message: "An error occurred while deleting data.", data: mainContainersId });
     }
+
+    if (results.affectedRows === 0) {
+      return res.json({ message: "No data found for the provided mainContainersId.", data: mainContainersId });
+    }
+    return res.json({ message: "Data successfully deleted.", data: mainContainersId });
   });
+
 });
+
 
 
 
@@ -505,9 +506,11 @@ router.get('/widgetContainers/get/', (req, res) => {
 router.get('/widgetContainers/getMain/:id', (req, res) => {
   const mainContainerId = req.params.id;
 
-  let sql = `SELECT * FROM widgetcontainertable WHERE mainContainerId = ?`;//convert(containerImageBitmapData using utf8) as containerImageBitmapData
-  // let sql = `SELECT id,mainContainerId, type, contentData, offsetDx, offsetDy, isBold, isUnderline,  isItalic, fontSize, alignment, rotation, widthSize,  height, selectTimeTextScanInt, prefix, suffix, convert(selectedEmojiIcons using utf8) as selectedEmojiIcons, isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth,
-  // isDottedLine, rowCount, columnCount FROM widgetcontainertable WHERE mainContainerId = ?`;
+  // let sql = `SELECT * FROM widgetcontainertable WHERE mainContainerId = ?`;//convert(containerImageBitmapData using utf8) as containerImageBitmapData
+  let sql = `SELECT id,mainContainerId, type, contentData, offsetDx, offsetDy, isBold, isUnderline,  isItalic, fontSize, alignment, rotation, widthSize,  height, selectTimeTextScanInt, prefix, suffix, convert(selectedEmojiIcons using utf8) as selectedEmojiIcons, isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth,
+  isDottedLine, rowCount, columnCount,columnWidths,rowHeights,cellTexts,tableTextAlignment,tableTextBold,tableTextUnderline,tableTextItalic,tableTextFontSize FROM widgetcontainertable WHERE mainContainerId = ?`;
+
+
   connection.query(sql, [mainContainerId], function (err, results) {
     if (err) {
       console.error("Error fetching data:", err);
@@ -523,20 +526,26 @@ router.get('/widgetContainers/getMain/:id', (req, res) => {
 
 router.delete('/widgetContainers/multiDelete/:mainId', (req, res) => {
   const mainId = req.params.mainId;
-  console.log(mainId)
 
   const sql = `DELETE FROM widgetcontainertable WHERE mainContainerId = ?`;
 
   connection.query(sql, [mainId], function (err, results) {
     if (err) {
       console.error("Error deleting data:", err);
-      res.status(500).json({ error: "An error occurred while deleting data." });
+      return res.status(500).json({ message: "An error occurred while deleting data.", data: mainId });
+    }
+
+    if (results.affectedRows === 0) {
+      // Data not found for deletion
+      return res.json({ message: "Data not found to delete", data: mainId });
     } else {
-      console.log("Successfully deleted data", results);
-      res.json(results);
+      // Data successfully deleted
+      console.log("Successfully deleted data for mainId:", mainId);
+      return res.json({ message: "Data successfully deleted", data: mainId });
     }
   });
 });
+
 
 
 module.exports = router;
