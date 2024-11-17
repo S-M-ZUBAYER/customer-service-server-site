@@ -19,6 +19,7 @@ const warehouseAndCitiesRouter = require("./routes/addWarehouseAndCities");
 const modelNoHightWidthRouter = require("./routes/addBluetoothModelNoHightWidth");
 const wifiModelNoHightWidthRouter = require("./routes/addWifiModelNoHightWidth");
 const versionRouter = require("./routes/version&othersInfo");
+const paymentRouter = require("./routes/PaymentRouter");
 
 //require the config file to connect with database
 const connection = require("./config/db")
@@ -59,6 +60,7 @@ app.use("/tht", warehouseAndCitiesRouter)
 app.use("/tht", modelNoHightWidthRouter)
 app.use("/tht", wifiModelNoHightWidthRouter)
 app.use("/tht", versionRouter)
+app.use("/tht", paymentRouter)
 
 
 //check the route 
