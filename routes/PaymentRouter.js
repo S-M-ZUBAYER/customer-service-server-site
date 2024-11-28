@@ -19,7 +19,10 @@ router.get('/paymentInfo/:email', (req, res) => {
             if (results.length === 1) {
                 res.json(results[0]); // Return the first (and only) object
             } else if (results.length === 0) {
-                res.status(404).send('No payment info found for the provided email');
+                res.send({
+                    email: email,
+                    paymentStatus: 0
+                });
             } else {
                 res.json(results); // Return the array if there are multiple results
             }
@@ -49,20 +52,93 @@ router.post('/paymentInfo', (req, res) => {
 
 
 
+// router.post("/create-payment-intent", async (req, res) => {
+//     const { amount, email } = req.body;
+//     console.log(amount, email);
+
+//     // Validate request data
+//     if (!amount || !email) {
+//         return res.status(400).json({ error: "Amount and email are required" });
+//     }
+
+//     try {
+//         // Create a payment intent with USD as the only supported currency
+//         const paymentIntent = await stripe.paymentIntents.create({
+//             amount: Math.round(amount * 100), // Convert to cents
+//             currency: 'usd', // Always USD
+//             receipt_email: email,
+//         });
+
+//         // Get the current timestamp
+//         const paymentTime = new Date();
+
+//         // Check if the email already exists
+//         const selectQuery = "SELECT * FROM paymentInfo WHERE email = ?";
+//         connection.query(selectQuery, [email], (err, results) => {
+//             if (err) {
+//                 console.error("Database error while checking email:", err);
+//                 return res.status(500).json({ error: "Database query failed" });
+//             }
+
+//             if (results.length > 0) {
+//                 // Update the existing record
+//                 const updateQuery = `
+//                     UPDATE paymentInfo 
+//                     SET amount = ?, paymentStatus = ?, paymentTime = ?
+//                     WHERE email = ?
+//                 `;
+//                 connection.query(updateQuery, [amount, true, paymentTime, email], (updateErr) => {
+//                     if (updateErr) {
+//                         console.error("Database error while updating transaction:", updateErr);
+//                         return res.status(500).json({ error: "Failed to update transaction in database" });
+//                     }
+
+//                     console.log("Transaction updated successfully for email:", email);
+//                     return res.status(200).json({
+//                         clientSecret: paymentIntent.client_secret,
+//                         message: "Payment intent created and transaction updated successfully",
+//                     });
+//                 });
+//             } else {
+//                 // Insert a new record
+//                 const insertQuery = `
+//                     INSERT INTO paymentInfo (amount, email, paymentStatus, paymentTime) 
+//                     VALUES (?, ?, ?, ?)
+//                 `;
+//                 connection.query(insertQuery, [amount, email, true, paymentTime], (insertErr, result) => {
+//                     if (insertErr) {
+//                         console.error("Database error while logging transaction:", insertErr);
+//                         return res.status(500).json({ error: "Failed to log transaction in database" });
+//                     }
+
+//                     console.log("Transaction logged successfully:", result.insertId);
+//                     return res.status(200).json({
+//                         clientSecret: paymentIntent.client_secret,
+//                         message: "Payment intent created and transaction logged successfully",
+//                     });
+//                 });
+//             }
+//         });
+//     } catch (error) {
+//         console.error("Stripe Payment Intent creation error:", error);
+//         res.status(500).json({ error: "Internal Server Error while creating payment intent" });
+//     }
+// });
+
 router.post("/create-payment-intent", async (req, res) => {
-    const { amount, email } = req.body;
-    console.log(amount, email);
+    const { amount, email, currency } = req.body; // Include currency in request body
+    console.log(amount, email, currency);
 
     // Validate request data
-    if (!amount) {
-        return res.status(400).json({ error: "Email is required" });
+    if (!amount || !email || !currency) {
+        return res.status(400).json({ error: "Amount, email, and currency are required" });
     }
 
     try {
-        // Create a payment intent using Stripe
+        // Create a payment intent with the provided currency
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(amount * 100), // Convert to cents
-            currency: "usd",
+            amount: Math.round(amount * 100), // Convert to smallest unit of currency (e.g., cents for USD)
+            currency: currency.toLowerCase(), // Ensure currency is in lowercase (e.g., "usd", "eur")
             receipt_email: email,
         });
 
@@ -77,15 +153,14 @@ router.post("/create-payment-intent", async (req, res) => {
                 return res.status(500).json({ error: "Database query failed" });
             }
 
-
             if (results.length > 0) {
                 // Update the existing record
                 const updateQuery = `
                     UPDATE paymentInfo 
-                    SET amount = ?, paymentStatus = ?, paymentTime = ?
+                    SET amount = ?, currency = ?, paymentStatus = ?, paymentTime = ?
                     WHERE email = ?
                 `;
-                connection.query(updateQuery, [amount, true, paymentTime, email], (updateErr) => {
+                connection.query(updateQuery, [amount, currency, true, paymentTime, email], (updateErr) => {
                     if (updateErr) {
                         console.error("Database error while updating transaction:", updateErr);
                         return res.status(500).json({ error: "Failed to update transaction in database" });
@@ -100,10 +175,10 @@ router.post("/create-payment-intent", async (req, res) => {
             } else {
                 // Insert a new record
                 const insertQuery = `
-                    INSERT INTO paymentInfo (amount, email, paymentStatus, paymentTime) 
-                    VALUES (?, ?, ?, ?)
+                    INSERT INTO paymentInfo (amount, currency, email, paymentStatus, paymentTime) 
+                    VALUES (?, ?, ?, ?, ?)
                 `;
-                connection.query(insertQuery, [amount, email, true, paymentTime], (insertErr, result) => {
+                connection.query(insertQuery, [amount, currency, email, true, paymentTime], (insertErr, result) => {
                     if (insertErr) {
                         console.error("Database error while logging transaction:", insertErr);
                         return res.status(500).json({ error: "Failed to log transaction in database" });
@@ -118,10 +193,57 @@ router.post("/create-payment-intent", async (req, res) => {
             }
         });
     } catch (error) {
-        console.error("Error creating payment intent:", error.message);
-        res.status(500).json({ error: "Failed to create payment intent" });
+        console.error("Stripe Payment Intent creation error:", error);
+        res.status(500).json({ error: "Internal Server Error while creating payment intent" });
     }
 });
+
+
+
+
+// router.post("/process-payment", async (req, res) => {
+//     console.log("payment");
+
+//     const { cardNumber, expMonth, expYear, cvc, amount, email } = req.body;
+
+//     if (!cardNumber || !expMonth || !expYear || !cvc || !amount || !email) {
+//         return res.status(400).json({ error: "Missing required fields" });
+//     }
+
+//     try {
+//         // Step 1: Create a Card Token (simulates frontend tokenization)
+//         const token = await stripe.tokens.create({
+//             card: {
+//                 number: cardNumber,
+//                 exp_month: expMonth,
+//                 exp_year: expYear,
+//                 cvc: cvc,
+//             },
+//         });
+
+//         // Step 2: Create a Payment Intent with the Token
+//         const paymentIntent = await stripe.paymentIntents.create({
+//             amount: Math.round(amount * 100), // Convert to cents
+//             currency: "usd",
+//             payment_method_data: {
+//                 type: "card",
+//                 card: { token: token.id },
+//             },
+//             receipt_email: email,
+//             confirm: true, // Confirm the payment immediately
+//         });
+
+//         // Step 3: Send success response
+//         res.status(200).json({
+//             message: "Payment successful",
+//             paymentIntent: paymentIntent,
+//         });
+//     } catch (error) {
+//         // Handle errors
+//         console.error("Error processing payment:", error.message);
+//         res.status(500).json({ error: error.message });
+//     }
+// });
 
 
 // PUT: Update payment status by email
