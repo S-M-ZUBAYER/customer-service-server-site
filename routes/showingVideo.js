@@ -1,183 +1,284 @@
-//Require necessary packages
+// const express = require("express")
+// const connection = require("../config/db")
+// const router = express.Router()
+// const cors = require("cors");
+// const fs = require('fs');
 
-const express = require("express")
-const connection = require("../config/db")
-const router = express.Router()
+// const app = express();
+// app.use(cors());
+// const bodyParser = require('body-parser');
+// app.use(bodyParser.json({ limit: '100mb' }));
+// app.use(bodyParser.urlencoded({ extended: true, limit: '100mb' }));
+// const multer = require("multer")
+// const path = require("path");
+// const { route } = require("./users");
+
+// // Set the specific folder to show the file
+// router.use(express.static('public'))
+
+// //create the structure to upload the file with specific name
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, 'public/showingVideos')
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname))
+//   }
+// })
+
+
+// //declare the multer
+// const upload = multer({
+//   storage: storage,
+//   limits: { fileSize: 100 * 1024 * 1024 } // Adjust the limit to handle up to 70MB
+// });
+
+
+// router.post('/showingVideo/add', upload.single('showingVideo'), (req, res) => {
+//   const { title, country } = req.body;
+//   if (!req.file) {
+//     return res.status(400).json({ status: 'error', message: 'No showing video uploaded' });
+//   }
+//   const showingVideo = req.file;
+//   const showingVideoData = {
+//     country,
+//     title,
+//     showingVideo: showingVideo ? showingVideo.filename : null,
+//   };
+
+
+//   // Insert the data into the database
+//   connection.query(
+//     'INSERT INTO showingVideos (title,countryName, showingVideo, imgPath) VALUES (?, ?, ?, ?)',
+//     [
+//       title,
+//       country,
+//       showingVideo.filename,
+//       'https://grozziieget.zjweiting.com:8033/tht/showingVideos/',
+//     ],
+//     (error, results) => {
+//       if (error) {
+//         console.error('Error creating showing video:', error);
+//         res.status(500).json({ status: 'error', message: 'Error creating showing video' });
+//       } else {
+//         console.log('showing video created successfully');
+//         res.status(200).json({ status: 'success', message: 'showing video created successfully' });
+//       }
+//     }
+//   );
+// });
+
+
+// router.get('/showingVideo', (req, res) => {
+//   connection.query('SELECT * FROM showingVideos', (error, results) => {
+//     if (error) {
+//       console.error('Error retrieving showing videos:', error);
+//       return res.status(500).json({ status: 'error', message: 'An error occurred while retrieving showing videos' });
+//     }
+//     res.json(results.length > 0 ? { status: 'success', data: results } : { status: 'not found', message: 'No showing videos found' });
+//   });
+// });
+
+
+
+// router.get('/showingVideo/:country', (req, res) => {
+//   const { country } = req.params;
+//   if (!country) {
+//     return res.status(400).json({ status: 'error', message: 'Country parameter is required' });
+//   }
+//   connection.query(
+//     'SELECT * FROM showingVideos WHERE countryName = ?',
+//     [country],
+//     (error, results) => {
+//       if (error) {
+//         console.error('Error retrieving showing video:', error);
+//         return res.status(500).json({ status: 'error', message: 'An error occurred while retrieving showing video' });
+//       }
+//       res.json(results.length > 0 ? { status: 'success', data: results } : { status: 'not found', message: 'No showing videos found for the given country' });
+//     }
+//   );
+// });
+
+
+// router.delete('/showingVideo/delete/:id', (req, res) => {
+//   const showingVideoId = req.params.id;
+//   const sql = 'SELECT * FROM showingVideos WHERE id = ?';
+//   connection.query(sql, [showingVideoId], (error, rows) => {
+//     if (error) {
+//       console.error('Error retrieving showing video:', error);
+//       return res.status(500).json({ status: 'error', message: 'Error retrieving showing video' });
+//     }
+//     if (rows.length === 0) {
+//       return res.status(404).json({ status: 'not found', message: 'Showing video not found' });
+//     }
+//     const showingVideo = rows[0];
+//     const filePath = `public/showingVideos/${showingVideo.showingVideo}`;
+
+//     // Delete the file from the server
+//     fs.unlink(filePath, (err) => {
+//       if (err) {
+//         console.error('Error deleting file:', err);
+//         return res.status(500).json({ status: 'error', message: 'Error deleting file' });
+//       }
+
+//       // Delete the showing video entry from the database
+//       const deleteSql = 'DELETE FROM showingVideos WHERE id = ?';
+//       connection.query(deleteSql, [showingVideoId], (dbError, result) => {
+//         if (dbError) {
+//           console.error('Error deleting showing video from database:', dbError);
+//           return res.status(500).json({ status: 'error', message: 'Error deleting showing video from database' });
+//         }
+
+//         return res.status(200).json({ status: 'success', message: 'Showing video deleted successfully' });
+//       });
+//     });
+//   });
+// });
+
+
+
+// module.exports = router;
+
+
+const express = require("express");
+const connection = require("../config/db");
+const router = express.Router();
 const cors = require("cors");
-const fs = require('fs');
+const fs = require("fs");
+const multer = require("multer");
+const path = require("path");
+const bodyParser = require("body-parser");
 
+// Middleware setup
 const app = express();
 app.use(cors());
-const bodyParser = require('body-parser');
 app.use(bodyParser.json({ limit: '100mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '100mb' }));
-// import multer from "multer" to upload file in backend
-const multer = require("multer")
 
-// import path from "path" to get the specific path of any file
-const path = require("path");
-const { route } = require("./users");
+// Serve static files
+router.use(express.static("public"));
 
-
-
-// Set the specific folder to show the file
-router.use(express.static('public'))
-
-
-//create the structure to upload the file with specific name
-
+// Set up storage for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'public/showingVideos')
+    cb(null, "public/showingVideos");
   },
   filename: (req, file, cb) => {
-    cb(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname))
-  }
-})
-
-
-//declare the multer
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 100 * 1024 * 1024 } // Adjust the limit to handle up to 70MB
+    cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`);
+  },
 });
 
+// Initialize multer for file handling
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB file size limit
+});
 
+// Utility function for handling database queries
+const queryDatabase = (sql, params = []) => {
+  return new Promise((resolve, reject) => {
+    connection.query(sql, params, (error, results) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(results);
+      }
+    });
+  });
+};
 
+// Route to add a showing video
+router.post("/showingVideo/add", upload.single("showingVideo"), async (req, res) => {
+  try {
+    const { title, country } = req.body;
+    if (!req.file) {
+      return res.status(400).json({ status: "error", message: "No showing video uploaded" });
+    }
 
-router.post('/showingVideo/add', upload.single('showingVideo'), (req, res) => {
-  const { title, country } = req.body;
+    const showingVideo = req.file;
+    const showingVideoData = {
+      country,
+      title,
+      showingVideo: showingVideo.filename,
+    };
 
-  // Check if there is an uploaded file
-  if (!req.file) {
-    return res.status(400).json({ status: 'error', message: 'No showing video uploaded' });
-  }
-
-  // Extract the uploaded file
-  const showingVideo = req.file;
-
-  // Construct the data to be inserted into the database
-  const showingVideoData = {
-    country,
-    title,
-    showingVideo: showingVideo ? showingVideo.filename : null,
-  };
-
-  // Insert the data into the database
-  connection.query(
-    'INSERT INTO showingVideos (title,countryName, showingVideo, imgPath) VALUES (?, ?, ?, ?)',
-    [
+    const query = 'INSERT INTO showingVideos (title, countryName, showingVideo, imgPath) VALUES (?, ?, ?, ?)';
+    await queryDatabase(query, [
       title,
       country,
       showingVideo.filename,
       'https://grozziieget.zjweiting.com:8033/tht/showingVideos/',
-    ],
-    (error, results) => {
-      if (error) {
-        console.error('Error creating showing video:', error);
-        res.status(500).json({ status: 'error', message: 'Error creating showing video' });
-      } else {
-        console.log('showing video created successfully');
-        res.status(200).json({ status: 'success', message: 'showing video created successfully' });
-      }
-    }
-  );
+    ]);
+    res.status(200).json({ status: "success", message: "Showing video created successfully" });
+  } catch (error) {
+    console.error("Error creating showing video:", error);
+    res.status(500).json({ status: "error", message: "Error creating showing video" });
+  }
 });
 
-
-// Add a new route handler for GET requests to get all showing videos
-router.get('/showingVideo', (req, res) => {
-  // Query the database to retrieve all showing videos
-  connection.query(
-    'SELECT * FROM showingVideos', // Remove the WHERE clause
-    (error, results) => {
-      if (error) {
-        console.error('Error retrieving showing videos:', error);
-        res.status(500).json({ status: 'error', message: 'Error retrieving showing videos' });
-      } else {
-        // Check if any showing videos were found
-        if (results.length === 0) {
-          res.status(404).json({ status: 'not found', message: 'No showing videos found' });
-        } else {
-          res.status(200).json({ status: 'success', data: results });
-        }
-      }
+// Route to get all showing videos
+router.get("/showingVideo", async (req, res) => {
+  try {
+    const results = await queryDatabase("SELECT * FROM showingVideos");
+    if (results.length > 0) {
+      res.json({ status: "success", data: results });
+    } else {
+      res.json({ status: "not found", message: "No showing videos found" });
     }
-  );
+  } catch (error) {
+    console.error("Error retrieving showing videos:", error);
+    res.status(500).json({ status: "error", message: "An error occurred while retrieving showing videos" });
+  }
 });
 
-router.get('/showingVideo/:country', (req, res) => {
+// Route to get showing videos by country
+router.get("/showingVideo/:country", async (req, res) => {
   const { country } = req.params;
-
-  // Query the database to retrieve color images based on the model number
-  connection.query(
-    'SELECT * FROM showingVideos WHERE countryName = ?',
-    [country],
-    (error, results) => {
-      if (error) {
-        console.error('Error retrieving showing video:', error);
-        res.status(500).json({ status: 'error', message: 'Error retrieving showing video' });
-      } else {
-        // Check if any color images were found
-        if (results.length === 0) {
-          res.status(404).json({ status: 'not found', message: 'showing video not found for the given model number' });
-        } else {
-          res.status(200).json({ status: 'success', data: results });
-        }
-      }
+  if (!country) {
+    return res.status(400).json({ status: "error", message: "Country parameter is required" });
+  }
+  try {
+    const results = await queryDatabase("SELECT * FROM showingVideos WHERE countryName = ?", [country]);
+    if (results.length > 0) {
+      res.json({ status: "success", data: results });
+    } else {
+      res.json({ status: "not found", message: "No showing videos found for the given country" });
     }
-  );
+  } catch (error) {
+    console.error("Error retrieving showing video:", error);
+    res.status(500).json({ status: "error", message: "An error occurred while retrieving showing video" });
+  }
 });
 
-
-
-
-router.delete('/showingVideo/delete/:id', (req, res) => {
+// Route to delete a showing video by ID
+router.delete("/showingVideo/delete/:id", async (req, res) => {
   const showingVideoId = req.params.id;
-  console.log(showingVideoId)
-  // Query the database to retrieve the showing video based on its ID
-  const sql = 'SELECT * FROM showingVideos WHERE id = ?';
-  connection.query(sql, [showingVideoId], (error, rows) => {
-    if (error) {
-      console.error('Error retrieving showing video:', error);
-      return res.status(500).json({ status: 'error', message: 'Error retrieving showing video' });
-    }
-
+  try {
+    const rows = await queryDatabase("SELECT * FROM showingVideos WHERE id = ?", [showingVideoId]);
     if (rows.length === 0) {
-      return res.status(404).json({ status: 'not found', message: 'Showing video not found' });
+      return res.status(404).json({ status: "not found", message: "Showing video not found" });
     }
 
     const showingVideo = rows[0];
-
-    // Construct the file path to delete the video from the server
     const filePath = `public/showingVideos/${showingVideo.showingVideo}`;
 
     // Delete the file from the server
-    fs.unlink(filePath, (err) => {
+    fs.unlink(filePath, async (err) => {
       if (err) {
-        console.error('Error deleting file:', err);
-        return res.status(500).json({ status: 'error', message: 'Error deleting file' });
+        console.error("Error deleting file:", err);
+        return res.status(500).json({ status: "error", message: "Error deleting file" });
       }
 
-      // Delete the showing video entry from the database
-      const deleteSql = 'DELETE FROM showingVideos WHERE id = ?';
-      connection.query(deleteSql, [showingVideoId], (dbError, result) => {
-        if (dbError) {
-          console.error('Error deleting showing video from database:', dbError);
-          return res.status(500).json({ status: 'error', message: 'Error deleting showing video from database' });
-        }
+      // Delete the video entry from the database
+      const deleteQuery = "DELETE FROM showingVideos WHERE id = ?";
+      await queryDatabase(deleteQuery, [showingVideoId]);
 
-        console.log('Showing video deleted successfully');
-        return res.status(200).json({ status: 'success', message: 'Showing video deleted successfully' });
-      });
+      res.status(200).json({ status: "success", message: "Showing video deleted successfully" });
     });
-  });
+  } catch (error) {
+    console.error("Error deleting showing video:", error);
+    res.status(500).json({ status: "error", message: "Error deleting showing video" });
+  }
 });
-
-
-
-
-
 
 module.exports = router;
