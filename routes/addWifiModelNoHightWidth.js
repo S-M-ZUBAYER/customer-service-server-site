@@ -343,11 +343,11 @@ router.post("/wifiModelHightWidth/add", async (req, res) => {
 /** Route to update WiFi model details */
 router.put("/wifiModelHightWidth/update", async (req, res) => {
     try {
-        const { id, defaultHeight, defaultWidth, maxHeight, maxWidth, type, musicValue } = req.body;
+        const { id, defaultHeight, defaultWidth, maxHeight, maxWidth, type, musicValue, sliderImageMark } = req.body;
         if (!id) return res.status(400).json({ message: "id is required" });
 
-        const sql = `UPDATE allWifiModelHightWidthList SET defaultHeight = ?, defaultWidth = ?, maxHeight = ?, maxWidth = ?, type = ?, musicValue = ? WHERE id = ?`;
-        const result = await executeQuery(sql, [defaultHeight, defaultWidth, maxHeight, maxWidth, type, musicValue, id]);
+        const sql = `UPDATE allWifiModelHightWidthList SET defaultHeight = ?, defaultWidth = ?, maxHeight = ?, maxWidth = ?, type = ?, musicValue = ?,sliderImageMark=? WHERE id = ?`;
+        const result = await executeQuery(sql, [defaultHeight, defaultWidth, maxHeight, maxWidth, type, musicValue, sliderImageMark, id]);
 
         if (result.affectedRows === 0) return res.status(404).json({ message: "No record found to update" });
 

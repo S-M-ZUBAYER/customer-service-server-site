@@ -217,6 +217,12 @@ const executeQuery = (query, params = [], res) => {
     });
 };
 
+// Function to handle errors and respond with consistent format
+const handleError = (res, message, error) => {
+    console.error(message, error);
+    res.status(500).json({ error: message });
+};
+
 // Route to get icons by category
 router.get('/icons', async (req, res) => {
     try {
@@ -325,6 +331,38 @@ router.post('/hightWidth/add', async (req, res) => {
         res.status(error.status || 500).json({ error: error.message || 'Error inserting data' });
     }
 });
+
+// Route to edit bluetooth model height and width data
+router.put('/bluetoothModelHightWidth/update/:id', async (req, res) => {
+    const { id } = req.params;
+    const { defaultHight, defaultWidth, maxHight, maxWidth, command, sliderImageMark } = req.body;
+
+    // Validate required fields
+    if (!defaultHight || !defaultWidth || !maxHight || !maxWidth || !command || !sliderImageMark) {
+        return res.status(400).json({ error: 'defaultHight, defaultWidth, maxHight, maxWidth, command, and sliderImageMark are required.' });
+    }
+
+    const query = `
+        UPDATE allHightWidthList 
+        SET 
+          defaultHight = ?, 
+          defaultWidth = ?, 
+          maxHight = ?, 
+          maxWidth = ?, 
+          sliderImageMark = ?, 
+          command = ?
+        WHERE id = ?`;
+
+    try {
+        const result = await executeQuery(query, [defaultHight, defaultWidth, maxHight, maxWidth, sliderImageMark, command, id]);
+        res.json(result);
+    } catch (err) {
+        handleError(res, 'Error updating height and width data', err);
+    }
+});
+
+
+
 
 // Route to add model number
 router.post('/modelNo/add', async (req, res) => {

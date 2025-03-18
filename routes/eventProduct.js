@@ -862,6 +862,32 @@ router.post(
         mark,
         slideImageMark,
       } = req.body;
+      console.log({
+        productCountryName,
+        productName,
+        productPrice,
+        productOriginalPrice,
+        productDescription,
+        modelNumber,
+        printerColor,
+        connectorType,
+        stockQuantity,
+        productImgLink,
+        productImgRemark,
+        relatedImgLink,
+        relatedImgRemark,
+        descriptionImgRemark,
+        shelfStartTime,
+        shelfEndTime,
+        afterSalesText,
+        afterSalesInstruction,
+        inventoryText,
+        date,
+        time,
+        link,
+        mark,
+        slideImageMark,
+      }, "call");
 
       const productImgFile = req.files["productImg"];
       const imgPath = "https://grozziieget.zjweiting.com:8033/tht/eventProductImages";
@@ -892,7 +918,7 @@ router.post(
         time,
         link,
         mark,
-        slideImageMark,
+        slideImageMark
       };
 
       const optionalFields = [
@@ -911,7 +937,7 @@ router.post(
       });
 
       const query =
-        "INSERT INTO eventproducts (productCountryName, productName, productPrice, productOriginalPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, imgPath, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark, descriptionImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages, allDescriptionImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time, link, mark, slideImageMark) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "INSERT INTO eventproducts (productCountryName, productName, productPrice, productOriginalPrice, productDescription, modelNumber, printerColor, connectorType, stockQuantity, imgPath, productImgLink, productImgRemark, relatedImgLink, relatedImgRemark, descriptionImgRemark, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages, allDescriptionImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time, link, mark, slideImageMark) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
       await executeQuery(query, [
         product.productCountryName,
@@ -944,8 +970,8 @@ router.post(
         product.date,
         product.time,
         product.link,
-        product.mark,
-        product.slideImageMark,
+        product.mark || 0,
+        product.slideImageMark || null,
       ]);
 
       res.send("Product created successfully");
@@ -1020,6 +1046,7 @@ router.put('/eventProductImages/update/textInformation/:id', (req, res) => {
     productName,
     productPrice,
     productOriginalPrice,
+    productImgRemark,
     productDescription,
     modelNumber,
     printerColor,
@@ -1037,14 +1064,18 @@ router.put('/eventProductImages/update/textInformation/:id', (req, res) => {
 
   const sql = `
     UPDATE eventproducts 
-    SET productName=?, productPrice=?, productOriginalPrice=? productDescription=?, modelNumber=?, printerColor=?, connectorType=?,
+    SET productName=?, productPrice=?, productOriginalPrice=?,productImgRemark=?, productDescription=?, modelNumber=?, printerColor=?, connectorType=?,
         stockQuantity=?, shelfStartTime=?, shelfEndTime=?, afterSalesText=?, afterSalesInstruction=?, 
         inventoryText=?, link=?, mark=?, slideImageMark=? 
     WHERE id=?`;
 
-  updateDatabase(sql, [productName, productPrice, productOriginalPrice, productDescription, modelNumber, printerColor, connectorType,
-    stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, link, mark, slideImageMark, req.params.id], res, 'Text information updated successfully');
+  updateDatabase(sql, [
+    productName, productPrice, productOriginalPrice, productImgRemark, productDescription, modelNumber, printerColor, connectorType,
+    stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, link, mark, slideImageMark,
+    req.params.id
+  ], res, 'Text information updated successfully');
 });
+
 
 // Generalized image update handler
 const updateImages = (tableColumn, req, res) => {

@@ -854,119 +854,261 @@ router.post("/mallProducts/ShopifyLinkMark/add", async (req, res) => {
 });
 
 // Add mall product
-router.post("/mallProducts/add", upload.fields([
-  { name: "productImg" },
-  { name: "invoiceFiles" },
-  { name: "images" },
-  { name: "descriptionImages" },
-  { name: "videos" },
-  { name: "instructionsImages" },
-  { name: "instructionsVideos" }
-]), async (req, res) => {
-  const {
-    productCountryName,
-    productName,
-    productPrice,
-    productOriginalPrice,
-    productDescription,
-    modelNumber,
-    printerColor,
-    connectorType,
-    stockQuantity,
-    productImgLink,
-    productImgRemark,
-    relatedImgLink,
-    relatedImgRemark,
-    descriptionImgRemark,
-    shelfStartTime,
-    shelfEndTime,
-    afterSalesText,
-    afterSalesInstruction,
-    inventoryText,
-    date,
-    time,
-    link,
-    mark
-  } = req.body;
+// router.post("/mallProducts/add", upload.fields([
+//   { name: "productImg" },
+//   { name: "invoiceFiles" },
+//   { name: "images" },
+//   { name: "descriptionImages" },
+//   { name: "videos" },
+//   { name: "instructionsImages" },
+//   { name: "instructionsVideos" }
+// ]), async (req, res) => {
+//   const {
+//     productCountryName,
+//     productName,
+//     productPrice,
+//     productOriginalPrice,
+//     productDescription,
+//     modelNumber,
+//     printerColor,
+//     connectorType,
+//     stockQuantity,
+//     productImgLink,
+//     productImgRemark,
+//     relatedImgLink,
+//     relatedImgRemark,
+//     descriptionImgRemark,
+//     shelfStartTime,
+//     shelfEndTime,
+//     afterSalesText,
+//     afterSalesInstruction,
+//     inventoryText,
+//     date,
+//     time,
+//     link,
+//     mark,
+//     slideImageMark
+//   } = req.body;
 
-  const productImgFile = req.files["productImg"];
-  const productImg = productImgFile ? productImgFile[0] : null;
-  const imgPath = "https://grozziieget.zjweiting.com:8033/tht/mallProductImages";
+//   const productImgFile = req.files["productImg"];
+//   const productImg = productImgFile ? productImgFile[0] : null;
+//   const imgPath = "https://grozziieget.zjweiting.com:8033/tht/mallProductImages";
 
-  const product = {
-    productCountryName,
-    productName,
-    productPrice,
-    productOriginalPrice,
-    productDescription,
-    modelNumber,
-    printerColor,
-    connectorType,
-    stockQuantity,
-    productImgLink,
-    productImgRemark,
-    relatedImgLink,
-    relatedImgRemark,
-    descriptionImgRemark,
-    shelfStartTime,
-    shelfEndTime,
-    afterSalesText,
-    afterSalesInstruction,
-    inventoryText,
-    productImg: productImg ? productImg.filename : null,
-    imgPath,
-    date,
-    time,
-    link,
-    mark
-  };
+//   const product = {
+//     productCountryName,
+//     productName,
+//     productPrice,
+//     productOriginalPrice,
+//     productDescription,
+//     modelNumber,
+//     printerColor,
+//     connectorType,
+//     stockQuantity,
+//     productImgLink,
+//     productImgRemark,
+//     relatedImgLink,
+//     relatedImgRemark,
+//     descriptionImgRemark,
+//     shelfStartTime,
+//     shelfEndTime,
+//     afterSalesText,
+//     afterSalesInstruction,
+//     inventoryText,
+//     productImg: productImg ? productImg.filename : null,
+//     imgPath,
+//     date,
+//     time,
+//     link,
+//     mark,
+//     slideImageMark
+//   };
 
-  // Handling file uploads
-  const allFiles = [
-    { name: "images", field: "allImages" },
-    { name: "descriptionImages", field: "allDescriptionImages" },
-    { name: "videos", field: "allVideos" },
-    { name: "instructionsImages", field: "allInstructionsImages" },
-    { name: "instructionsVideos", field: "allInstructionsVideos" },
-    { name: "invoiceFiles", field: "invoiceFiles" }
-  ];
+//   // Handling file uploads
+//   const allFiles = [
+//     { name: "images", field: "allImages" },
+//     { name: "descriptionImages", field: "allDescriptionImages" },
+//     { name: "videos", field: "allVideos" },
+//     { name: "instructionsImages", field: "allInstructionsImages" },
+//     { name: "instructionsVideos", field: "allInstructionsVideos" },
+//     { name: "invoiceFiles", field: "invoiceFiles" }
+//   ];
 
-  allFiles.forEach(file => {
-    const files = req.files[file.name];
-    if (files && files.length > 0) {
-      product[file.field] = files.map(file => file.filename);
+//   allFiles.forEach(file => {
+//     const files = req.files[file.name];
+//     if (files && files.length > 0) {
+//       product[file.field] = files.map(file => file.filename);
+//     }
+//   });
+
+//   try {
+//     await queryDatabase(
+//       `INSERT INTO mallproducts (
+//         productCountryName, productName, productPrice,productOriginalPrice, productDescription, modelNumber,
+//         printerColor, connectorType, stockQuantity, imgPath, productImgLink, productImgRemark,
+//         relatedImgLink, relatedImgRemark, descriptionImgRemark, shelfStartTime, shelfEndTime,
+//         afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages,
+//         allDescriptionImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time, link, mark,slideImageMark
+//       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,? ,? ,? ,?)`,
+//       [
+//         productCountryName, productName, productPrice, productOriginalPrice, productDescription, modelNumber,
+//         printerColor, connectorType, stockQuantity, imgPath, productImgLink, productImgRemark,
+//         relatedImgLink, relatedImgRemark, descriptionImgRemark, shelfStartTime, shelfEndTime,
+//         afterSalesText, afterSalesInstruction, inventoryText, productImg.filename,
+//         product.invoiceFiles ? product.invoiceFiles.join(",") : null,
+//         product.allImages ? product.allImages.join(",") : null,
+//         product.allDescriptionImages ? product.allDescriptionImages.join(",") : null,
+//         product.allVideos ? product.allVideos.join(",") : null,
+//         product.allInstructionsImages ? product.allInstructionsImages.join(",") : null,
+//         product.allInstructionsVideos ? product.allInstructionsVideos.join(",") : null,
+//         date, time, link, mark || 0, slideImageMark
+//       ]
+//     );
+//     res.send("Product created successfully");
+//   } catch (error) {
+//     console.error("Error creating product:", error);
+//     res.status(500).send("Error creating product");
+//   }
+// });
+
+router.post(
+  "/mallProducts/add",
+  upload.fields([
+    { name: "productImg" },
+    { name: "invoiceFiles" },
+    { name: "images" },
+    { name: "descriptionImages" },
+    { name: "videos" },
+    { name: "instructionsImages" },
+    { name: "instructionsVideos" },
+  ]),
+  async (req, res) => {
+    const {
+      productCountryName,
+      productName,
+      productPrice,
+      productOriginalPrice,
+      productDescription,
+      modelNumber,
+      printerColor,
+      connectorType,
+      stockQuantity,
+      productImgLink,
+      productImgRemark,
+      relatedImgLink,
+      relatedImgRemark,
+      descriptionImgRemark,
+      shelfStartTime,
+      shelfEndTime,
+      afterSalesText,
+      afterSalesInstruction,
+      inventoryText,
+      date,
+      time,
+      link,
+      mark,
+      slideImageMark,
+    } = req.body;
+
+    const productImgFile = req.files["productImg"];
+    const productImg = productImgFile ? productImgFile[0] : null;
+    const imgPath = "https://grozziieget.zjweiting.com:8033/tht/mallProductImages";
+
+    const product = {
+      productCountryName,
+      productName,
+      productPrice,
+      productOriginalPrice,
+      productDescription,
+      modelNumber,
+      printerColor,
+      connectorType,
+      stockQuantity,
+      productImgLink,
+      productImgRemark,
+      relatedImgLink,
+      relatedImgRemark,
+      descriptionImgRemark,
+      shelfStartTime,
+      shelfEndTime,
+      afterSalesText,
+      afterSalesInstruction,
+      inventoryText,
+      productImg: productImg ? productImg.filename : null,
+      imgPath,
+      date,
+      time,
+      link,
+      mark: mark || 0, // Default to 0 if mark is undefined
+      slideImageMark,
+    };
+
+    const allFiles = [
+      { name: "images", field: "allImages" },
+      { name: "descriptionImages", field: "allDescriptionImages" },
+      { name: "videos", field: "allVideos" },
+      { name: "instructionsImages", field: "allInstructionsImages" },
+      { name: "instructionsVideos", field: "allInstructionsVideos" },
+      { name: "invoiceFiles", field: "invoiceFiles" },
+    ];
+
+    allFiles.forEach((file) => {
+      const files = req.files[file.name];
+      if (files && files.length > 0) {
+        product[file.field] = files.map((f) => f.filename).join(",");
+      }
+    });
+
+    try {
+      const columns = [
+        "productCountryName",
+        "productName",
+        "productPrice",
+        "productOriginalPrice",
+        "productDescription",
+        "modelNumber",
+        "printerColor",
+        "connectorType",
+        "stockQuantity",
+        "imgPath",
+        "productImgLink",
+        "productImgRemark",
+        "relatedImgLink",
+        "relatedImgRemark",
+        "descriptionImgRemark",
+        "shelfStartTime",
+        "shelfEndTime",
+        "afterSalesText",
+        "afterSalesInstruction",
+        "inventoryText",
+        "productImg",
+        "invoiceFile",
+        "allImages",
+        "allDescriptionImages",
+        "allVideos",
+        "allInstructionsImage",
+        "allInstructionsVideos",
+        "date",
+        "time",
+        "link",
+        "mark",
+        "slideImageMark",
+      ];
+
+      const values = columns.map((col) => product[col] || null);
+
+      await queryDatabase(
+        `INSERT INTO mallproducts (${columns.join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`,
+        values
+      );
+
+      res.send("Product created successfully");
+    } catch (error) {
+      console.error("Error creating product:", error);
+      res.status(500).send("Error creating product");
     }
-  });
-
-  try {
-    await queryDatabase(
-      `INSERT INTO mallproducts (
-        productCountryName, productName, productPrice,productOriginalPrice, productDescription, modelNumber,
-        printerColor, connectorType, stockQuantity, imgPath, productImgLink, productImgRemark,
-        relatedImgLink, relatedImgRemark, descriptionImgRemark, shelfStartTime, shelfEndTime,
-        afterSalesText, afterSalesInstruction, inventoryText, productImg, invoiceFile, allImages,
-        allDescriptionImages, allVideos, allInstructionsImage, allInstructionsVideos, date, time, link, mark
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        productCountryName, productName, productPrice, productOriginalPrice, productDescription, modelNumber,
-        printerColor, connectorType, stockQuantity, imgPath, productImgLink, productImgRemark,
-        relatedImgLink, relatedImgRemark, descriptionImgRemark, shelfStartTime, shelfEndTime,
-        afterSalesText, afterSalesInstruction, inventoryText, productImg.filename,
-        product.invoiceFiles ? product.invoiceFiles.join(",") : null,
-        product.allImages ? product.allImages.join(",") : null,
-        product.allDescriptionImages ? product.allDescriptionImages.join(",") : null,
-        product.allVideos ? product.allVideos.join(",") : null,
-        product.allInstructionsImages ? product.allInstructionsImages.join(",") : null,
-        product.allInstructionsVideos ? product.allInstructionsVideos.join(",") : null,
-        date, time, link, mark
-      ]
-    );
-    res.send("Product created successfully");
-  } catch (error) {
-    console.error("Error creating product:", error);
-    res.status(500).send("Error creating product");
   }
-});
+);
+
 
 // Update Shopify link and mark
 router.put("/mallProducts/ShopifyLinkMark/update/:id", async (req, res) => {
@@ -1089,6 +1231,7 @@ router.put('/mallProductImages/update/textInformation/:id', async (req, res) => 
       productName,
       productPrice,
       productOriginalPrice,
+      productImgRemark,
       productDescription,
       modelNumber,
       printerColor,
@@ -1103,11 +1246,12 @@ router.put('/mallProductImages/update/textInformation/:id', async (req, res) => 
       mark
     } = req.body.updatedProduct;
 
-    const sql = `UPDATE mallproducts SET productName=?, productPrice=?,productOriginalPrice=?, productDescription=?, modelNumber=?, printerColor=?, connectorType=?, stockQuantity=?, shelfStartTime=?, shelfEndTime=?, afterSalesText=?, afterSalesInstruction=?, inventoryText=?, link=?, mark=? WHERE id=?`;
+    const sql = `UPDATE mallproducts SET productName=?, productPrice=?,productOriginalPrice=?,productImgRemark=?, productDescription=?, modelNumber=?, printerColor=?, connectorType=?, stockQuantity=?, shelfStartTime=?, shelfEndTime=?, afterSalesText=?, afterSalesInstruction=?, inventoryText=?, link=?, mark=? WHERE id=?`;
     const params = [
       productName,
       productPrice,
       productOriginalPrice,
+      productImgRemark,
       productDescription,
       modelNumber,
       printerColor,
@@ -1327,44 +1471,69 @@ router.put('/mallProductImages/updateRelatedVideos/:id', upload.array('videos', 
   }
 });
 
-// Handler for deleting a mall product
-router.delete('/mallProducts/delete/:id', async (req, res) => {
+
+// Helper function to delete files
+const deleteFiles = (filePaths, folderPath) => {
+  filePaths.forEach((filename) => {
+    if (filename) {
+      const filePath = path.join(folderPath, filename);
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error(`Error deleting file (${filePath}):`, err);
+        } else {
+          console.log(`File deleted: ${filePath}`);
+        }
+      });
+    }
+  });
+};
+
+// Route to delete a mall product by ID
+router.delete('/mallProducts/delete/:id', (req, res) => {
   const productId = req.params.id;
+  const sql = `SELECT * FROM mallproducts WHERE id = ?`;
 
-  try {
-    // Select product from the database
-    const productQuery = 'SELECT * FROM mallproducts WHERE id = ?';
-    const [productRows] = await connection.query(productQuery, [productId]);
+  connection.query(sql, [productId], (err, rows) => {
+    if (err) {
+      console.error('Error retrieving mall product:', err);
+      return res.status(500).send('Error retrieving mall product');
+    }
 
-    if (productRows.length === 0) {
+    if (rows.length === 0) {
       return res.status(404).send('Mall product not found');
     }
 
-    const product = productRows[0];
-    const allFiles = [
-      product.productImg,
-      ...product.allImages.split(","),
-      ...product.allDescriptionImages.split(","),
-      ...product.instructionsImages.split(","),
-      ...product.allVideos.split(","),
-      ...product.instructionsVideos.split(","),
-      ...product.invoiceFile.split(",")
+    const product = rows[0];
+    const folderPath = 'public/mallProductImages';
+
+    // Collect all associated files dynamically
+    const fileFields = [
+      'productImg',
+      'allImages',
+      'allDescriptionImages',
+      'instructionsImages',
+      'allVideos',
+      'instructionsVideos',
+      'invoiceFile',
     ];
 
-    // Delete all associated files
-    await Promise.all(allFiles.map(filename => deleteFile(path.join('public/mallProductImages', filename))));
+    fileFields.forEach((field) => {
+      const files = product[field] ? product[field].split(',') : [];
+      deleteFiles(files, folderPath);
+    });
 
-    // Delete product from the database
-    const deleteQuery = 'DELETE FROM mallproducts WHERE id = ?';
-    await connection.query(deleteQuery, [productId]);
+    // Delete the product from the database
+    const deleteSql = `DELETE FROM mallproducts WHERE id = ?`;
+    connection.query(deleteSql, [productId], (err, result) => {
+      if (err) {
+        console.error('Error deleting mall product from database:', err);
+        return res.status(500).send('Error deleting mall product from database');
+      }
 
-    return res.status(200).json({ message: 'Mall product and associated files deleted successfully' });
-  } catch (err) {
-    console.error('Error deleting mall product:', err);
-    return res.status(500).send('Error deleting mall product');
-  }
+      res.status(200).json({ message: 'Mall product and associated files deleted successfully', result });
+    });
+  });
 });
-
 
 
 module.exports = router;

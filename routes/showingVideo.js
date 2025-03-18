@@ -190,9 +190,17 @@ const queryDatabase = (sql, params = []) => {
 // Route to add a showing video
 router.post("/showingVideo/add", upload.single("showingVideo"), async (req, res) => {
   try {
-    const { title, country } = req.body;
+    // Extract fields from the request
+    const { title, country, imgPath } = req.body;
+
+    // Validate request body
+    if (!title || !country || !imgPath) {
+      return res.status(400).json({ status: "error", message: "All fields are required." });
+    }
+
+    // Check if file is uploaded
     if (!req.file) {
-      return res.status(400).json({ status: "error", message: "No showing video uploaded" });
+      return res.status(400).json({ status: "error", message: "No showing video uploaded." });
     }
 
     const showingVideo = req.file;
@@ -200,21 +208,34 @@ router.post("/showingVideo/add", upload.single("showingVideo"), async (req, res)
       country,
       title,
       showingVideo: showingVideo.filename,
+      imgPath,
     };
+    console.log(showingVideoData);
 
-    const query = 'INSERT INTO showingVideos (title, countryName, showingVideo, imgPath) VALUES (?, ?, ?, ?)';
+
+    // SQL Query
+    const query = `INSERT INTO showingVideos (title, countryName, showingVideo, imgPath) VALUES (?, ?, ?, ?)`;
+
+    // Execute query
     await queryDatabase(query, [
-      title,
-      country,
-      showingVideo.filename,
-      'https://grozziieget.zjweiting.com:8033/tht/showingVideos/',
+      showingVideoData.title,
+      showingVideoData.country,
+      showingVideoData.showingVideo,
+      showingVideoData.imgPath,
     ]);
-    res.status(200).json({ status: "success", message: "Showing video created successfully" });
+
+    // Send success response
+    res.status(200).json({ status: "success", message: "Showing video created successfully." });
   } catch (error) {
     console.error("Error creating showing video:", error);
-    res.status(500).json({ status: "error", message: "Error creating showing video" });
+    res.status(500).json({
+      status: "error",
+      message: "Error creating showing video.",
+      error: error.message, // Include error details for debugging
+    });
   }
 });
+
 
 // Route to get all showing videos
 router.get("/showingVideo", async (req, res) => {

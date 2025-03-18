@@ -737,35 +737,87 @@ router.delete('/mainContainers/delete/:id', async (req, res) => {
 });
 
 // Create a new widget container
-router.post('/widgetContainers/add/', async (req, res) => {
-  const { mainContainerId, type, contentData, offsetDx, offsetDy, widthSize, height, selectTimeTextScanInt, isBold, isUnderline, isItalic, fontSize, alignment, rotation, prefix, suffix, selectedEmojiIcons, isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth, isDottedLine, rowCount, columnCount, columnWidths, rowHeights, cellTexts, tableTextAlignment, tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize } = req.body;
-
-  const dataToStore = {
+router.post('/widgetContainers/add', async (req, res) => {
+  const {
     mainContainerId,
-    type,
+    widgetType,  // Updated field
     contentData,
     offsetDx,
     offsetDy,
-    widthSize,
+    width,  // Updated field
+    height,
+    rotation,
+    selectTimeTextScanInt,
+    isBold,
+    isUnderline,
+    isItalic,
+    fontSize,
+    textAlignment, // Updated field
+    checkTextIdentifyWidget, // New field (type: text)
+    barEncodingType, // New field (type: text)
+    rowCount,
+    columnCount,
+    tablesCells, // New field (type: text)
+    tablesRowHeights, // New field (type: text)
+    tablesColumnWidths, // New field (type: text)
+    selectedEmojiIcons,
+    prefix,
+    suffix,
+    shapeTypes, // New field (type: text)
+    isRectangale,
+    isRoundRectangale,
+    isCircularFixed,
+    isCircularNotFixed,
+    widgetLineWidth,  // Updated field
+    isFixedFigureSize,  // New field
+    trueShapeWidth, // New field (type: double)
+    trueShapeHeight, // New field (type: double)
+    isDottedLine,
+    columnWidths,
+    rowHeights,
+    cellTexts,
+    tableTextAlignment,
+    tableTextBold,
+    tableTextUnderline,
+    tableTextItalic,
+    tableTextFontSize
+  } = req.body;
+
+  const dataToStore = {
+    mainContainerId,
+    widgetType,
+    contentData,
+    offsetDx,
+    offsetDy,
+    width,
     height: height || null,
+    rotation: rotation,
     selectTimeTextScanInt: selectTimeTextScanInt || null,
     isBold: isBold || 0,
     isUnderline: isUnderline || 0,
     isItalic: isItalic || 0,
     fontSize: fontSize,
-    alignment: alignment || "left",
-    rotation: rotation,
+    textAlignment: textAlignment || "left",
+    checkTextIdentifyWidget,
+    barEncodingType,
+    rowCount: rowCount || null,
+    columnCount: columnCount || null,
+    tablesCells,
+    tablesRowHeights,
+    tablesColumnWidths,
+    selectedEmojiIcons: selectedEmojiIcons || {},
     prefix: prefix || null,
     suffix: suffix || null,
-    selectedEmojiIcons: selectedEmojiIcons || {},
+    shapeTypes,
     isRectangale: isRectangale || 0,
     isRoundRectangale: isRoundRectangale || 0,
     isCircularFixed: isCircularFixed || 0,
     isCircularNotFixed: isCircularNotFixed || 0,
-    sliderLineWidth: sliderLineWidth,
+    widgetLineWidth,
+    isFixedFigureSize: isFixedFigureSize || 0,
+    trueShapeWidth,
+    trueShapeHeight,
     isDottedLine: isDottedLine || 0,
-    rowCount: rowCount || null,
-    columnCount: columnCount || null,
     columnWidths: columnWidths || null,
     rowHeights: rowHeights || null,
     cellTexts: cellTexts || null,
@@ -777,33 +829,50 @@ router.post('/widgetContainers/add/', async (req, res) => {
   };
 
   try {
-    const sql = `INSERT INTO widgetcontainertable (mainContainerId, type, contentData, offsetDx, offsetDy, widthSize, height, selectTimeTextScanInt, isBold, isUnderline, isItalic, fontSize, alignment, rotation, prefix, suffix, selectedEmojiIcons, isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth, isDottedLine, rowCount, columnCount, columnWidths, rowHeights, cellTexts, tableTextAlignment, tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+    const sql = `INSERT INTO widgetcontainertable 
+    (mainContainerId, widgetType, contentData, offsetDx, offsetDy, width, height, rotation, selectTimeTextScanInt, 
+    isBold, isUnderline, isItalic, fontSize, textAlignment, checkTextIdentifyWidget, barEncodingType, rowCount, columnCount, 
+    tablesCells, tablesRowHeights, tablesColumnWidths, selectedEmojiIcons, prefix, suffix, shapeTypes, 
+    isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth, isFixedFigureSize, 
+    trueShapeWidth, trueShapeHeight, isDottedLine, columnWidths, rowHeights, cellTexts, tableTextAlignment, 
+    tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize) 
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
     const result = await queryDatabase(sql, [
       dataToStore.mainContainerId,
-      dataToStore.type,
+      dataToStore.widgetType,
       dataToStore.contentData,
       dataToStore.offsetDx,
       dataToStore.offsetDy,
-      dataToStore.widthSize,
+      dataToStore.width,
       dataToStore.height,
+      dataToStore.rotation,
       dataToStore.selectTimeTextScanInt,
       dataToStore.isBold,
       dataToStore.isUnderline,
       dataToStore.isItalic,
       dataToStore.fontSize,
-      dataToStore.alignment,
-      dataToStore.rotation,
+      dataToStore.textAlignment,
+      dataToStore.checkTextIdentifyWidget,
+      dataToStore.barEncodingType,
+      dataToStore.rowCount,
+      dataToStore.columnCount,
+      dataToStore.tablesCells,
+      dataToStore.tablesRowHeights,
+      dataToStore.tablesColumnWidths,
+      JSON.stringify(dataToStore.selectedEmojiIcons),
       dataToStore.prefix,
       dataToStore.suffix,
-      JSON.stringify(dataToStore.selectedEmojiIcons),
+      dataToStore.shapeTypes,
       dataToStore.isRectangale,
       dataToStore.isRoundRectangale,
       dataToStore.isCircularFixed,
       dataToStore.isCircularNotFixed,
-      dataToStore.sliderLineWidth,
+      dataToStore.widgetLineWidth,
+      dataToStore.isFixedFigureSize,
+      dataToStore.trueShapeWidth,
+      dataToStore.trueShapeHeight,
       dataToStore.isDottedLine,
-      dataToStore.rowCount,
-      dataToStore.columnCount,
       dataToStore.columnWidths,
       dataToStore.rowHeights,
       dataToStore.cellTexts,
@@ -813,6 +882,7 @@ router.post('/widgetContainers/add/', async (req, res) => {
       dataToStore.tableTextItalic,
       dataToStore.tableTextFontSize
     ]);
+
     console.log("Successfully inserted data", result);
     res.json(result);
   } catch (err) {
@@ -843,20 +913,23 @@ router.get('/widgetContainers/getMain/:id', async (req, res) => {
 
   try {
     const sql = `
-      SELECT id, mainContainerId, type, contentData, offsetDx, offsetDy, isBold, isUnderline, isItalic, fontSize, alignment, rotation, widthSize, height,
+      SELECT id, mainContainerId, widgetType, contentData, offsetDx, offsetDy, isBold, isUnderline, isItalic, fontSize, textAlignment, rotation, width, height,
              selectTimeTextScanInt, prefix, suffix, 
              CONVERT(selectedEmojiIcons USING utf8) AS selectedEmojiIcons, 
-             isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth,
-             isDottedLine, rowCount, columnCount, columnWidths, rowHeights, cellTexts, 
-             tableTextAlignment, tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize
+             isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth,
+             isDottedLine, rowCount, columnCount, tablesColumnWidths, tablesRowHeights, tablesCells, 
+             tableTextAlignment, tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize,
+             checkTextIdentifyWidget, barEncodingType, shapeTypes, isFixedFigureSize, trueShapeWidth, trueShapeHeight
       FROM widgetcontainertable 
       WHERE mainContainerId = ?
     `;
+
     const results = await queryDatabase(sql, [mainContainerId]);
     if (results.length === 0) {
       console.log(`No data found for mainContainerId: ${mainContainerId}`);
       return res.json([]);
     }
+
     res.json(results);
   } catch (err) {
     console.error("Error fetching widget data:", err.message);
