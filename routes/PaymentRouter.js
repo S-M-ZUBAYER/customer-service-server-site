@@ -1030,10 +1030,22 @@ router.delete('/multiVendorInfo/delete/:id', async (req, res) => {
         });
     }
 });
+
+
+
 // POST request to add data for MultiVendor payment
+
 router.get('/multiVendorPackage/amount', async (req, res) => {
     try {
-        const query = 'SELECT * FROM multiVendorPaymentAmount';
+        const query = `
+            SELECT 
+                p.id, p.packageName, p.Duration, p.allowMark, p.USD, p.EUR, p.SGD, p.CNY,
+                f.feature
+            FROM 
+                multiVendorPaymentAmount p
+            LEFT JOIN 
+                multiVendorPackageFeatures f ON p.id = f.package_id
+        `;
         const result = await queryDatabase(query);
 
         if (!result || result.length === 0) {
@@ -1046,12 +1058,35 @@ router.get('/multiVendorPackage/amount', async (req, res) => {
             });
         }
 
+        // Organize data into the desired structure
+        const packages = result.reduce((acc, row) => {
+            if (!acc[row.id]) {
+                acc[row.id] = {
+                    id: row.id,
+                    packageName: row.packageName,
+                    Duration: row.Duration,
+                    allowMark: row.allowMark,
+                    currency: {
+                        USD: row.USD,
+                        EUR: row.EUR,
+                        SGD: row.SGD,
+                        CNY: row.CNY
+                    },
+                    features: []
+                };
+            }
+            if (row.feature) {
+                acc[row.id].features.push(row.feature);
+            }
+            return acc;
+        }, {});
+
         res.status(200).json({
             status: 200,
             success: true,
             message: 'Records retrieved successfully',
-            total: result.length,
-            data: result
+            total: Object.keys(packages).length,
+            data: Object.values(packages)
         });
 
     } catch (error) {
@@ -1071,7 +1106,16 @@ router.get('/multiVendorPaymentInfo/amount/:packageName', async (req, res) => {
     const { packageName } = req.params;
 
     try {
-        const query = `SELECT * FROM multiVendorPaymentAmount WHERE packageName = ?`;
+        const query = `
+            SELECT 
+                m.id, m.packageName, m.USD, m.EUR, m.SGD, m.CNY, m.Duration, m.allowMark, f.feature
+            FROM 
+                multiVendorPaymentAmount m
+            LEFT JOIN 
+                multivendorpackagefeatures f ON m.id = f.package_id
+            WHERE 
+                m.packageName = ?
+        `;
         const result = await queryDatabase(query, [packageName]);
 
         if (!result || result.length === 0) {
@@ -1096,7 +1140,8 @@ router.get('/multiVendorPaymentInfo/amount/:packageName', async (req, res) => {
                 EUR: record.EUR,
                 SGD: record.SGD,
                 CNY: record.CNY
-            }
+            },
+            features: result.filter(row => row.feature).map(row => row.feature)
         };
 
         res.status(200).json({
@@ -1121,25 +1166,26 @@ router.get('/multiVendorPaymentInfo/amount/:packageName', async (req, res) => {
 });
 
 router.post('/multiVendorPaymentInfo/amount', async (req, res) => {
-    const { packageName, USD, EUR, SGD, CNY, Duration, allowMark } = req.body;
+    const { packageName, USD, EUR, SGD, CNY, Duration, allowMark, features } = req.body;
 
     // Validate input
-    if ([packageName, USD, EUR, SGD, CNY, Duration, allowMark].some((value) => value === undefined || value === null || isNaN(value))) {
+    if (!packageName || isNaN(USD) || isNaN(EUR) || isNaN(SGD) || isNaN(CNY) || isNaN(Duration) || isNaN(allowMark) || !Array.isArray(features)) {
         return res.status(400).json({
             status: 400,
             success: false,
-            message: 'Invalid input: USD, EUR, SGD, CNY, and allowMark are required and must be valid numbers',
+            message: 'Invalid input: All currency values, Duration, and allowMark must be numbers. Features must be an array.',
             total: 0,
             data: null
         });
     }
 
-    const query = 'INSERT INTO multiVendorPaymentAmount (packageName, USD, EUR, SGD, CNY, Duration, allowMark) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    const paymentQuery = `INSERT INTO multiVendorPaymentAmount (packageName, USD, EUR, SGD, CNY, Duration, allowMark) VALUES (?, ?, ?, ?, ?, ?, ?)`;
 
     try {
-        const result = await queryDatabase(query, [packageName, USD, EUR, SGD, CNY, Duration, allowMark]);
+        // Insert payment details
+        const paymentResult = await queryDatabase(paymentQuery, [packageName, USD, EUR, SGD, CNY, Duration, allowMark]);
 
-        if (!result || result.affectedRows === 0) {
+        if (!paymentResult || paymentResult.affectedRows === 0) {
             return res.status(500).json({
                 status: 500,
                 success: false,
@@ -1149,12 +1195,27 @@ router.post('/multiVendorPaymentInfo/amount', async (req, res) => {
             });
         }
 
+        const packageId = paymentResult.insertId;
+
+        // Insert features into multiVendorPaymentFeatures table
+        const featureQuery = `INSERT INTO multiVendorPackageFeatures (package_id, feature) VALUES (?, ?)`;
+        for (const feature of features) {
+            await queryDatabase(featureQuery, [packageId, feature]);
+        }
+
         res.status(201).json({
             status: 201,
             success: true,
-            message: 'MultiVendor payment record added successfully',
+            message: 'MultiVendor payment record added successfully with features',
             total: 1,
-            data: { id: result.insertId, packageName, USD, EUR, SGD, CNY, Duration, allowMark }
+            data: {
+                id: packageId,
+                packageName,
+                currency: { USD, EUR, SGD, CNY },
+                Duration,
+                allowMark,
+                features
+            }
         });
 
     } catch (error) {
@@ -1169,33 +1230,39 @@ router.post('/multiVendorPaymentInfo/amount', async (req, res) => {
         });
     }
 });
-// PUT request to update an existing MultiVendor payment record
+
 router.put('/multiVendorPaymentInfo/amount/update/:packageName', async (req, res) => {
     const { packageName } = req.params;
-    const { USD, EUR, SGD, CNY, Duration, allowMark } = req.body;
+    const { USD, EUR, SGD, CNY, Duration, allowMark, features } = req.body;
 
     // Input validation
     if (
-        [USD, EUR, SGD, CNY, Duration, allowMark].some(value => value === undefined || value === null || isNaN(value))
+        [USD, EUR, SGD, CNY, Duration, allowMark].some(value => value === undefined || value === null || isNaN(value)) ||
+        !Array.isArray(features)
     ) {
         return res.status(400).json({
             status: 400,
             success: false,
-            message: 'Invalid input: USD, EUR, SGD, CNY, Duration, and allowMark are required and must be valid numbers',
+            message: 'Invalid input: Currency values, Duration, and allowMark must be valid numbers; features must be an array.',
             total: 0,
             data: null
         });
     }
 
+    let connection;
     try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
         const query = `
             UPDATE multiVendorPaymentAmount 
             SET USD = ?, EUR = ?, SGD = ?, CNY = ?, Duration = ?, allowMark = ?
             WHERE packageName = ?
         `;
-        const result = await queryDatabase(query, [USD, EUR, SGD, CNY, Duration, allowMark, packageName]);
+        const [result] = await connection.query(query, [USD, EUR, SGD, CNY, Duration, allowMark, packageName]);
 
-        if (!result || result.affectedRows === 0) {
+        if (result.affectedRows === 0) {
+            await connection.rollback();
             return res.status(404).json({
                 status: 404,
                 success: false,
@@ -1205,17 +1272,29 @@ router.put('/multiVendorPaymentInfo/amount/update/:packageName', async (req, res
             });
         }
 
+        // Delete existing features
+        const deleteFeaturesQuery = `DELETE FROM multiVendorPackageFeatures WHERE package_id = ?`;
+        await connection.query(deleteFeaturesQuery, [packageName]);
+
+        // Insert new features
+        const insertFeatureQuery = `INSERT INTO multiVendorPackageFeatures (package_id, feature) VALUES (?, ?)`;
+        for (const feature of features) {
+            await connection.query(insertFeatureQuery, [packageName, feature]);
+        }
+
+        await connection.commit();
+
         res.status(200).json({
             status: 200,
             success: true,
-            message: 'Record updated successfully',
+            message: 'Record and features updated successfully',
             total: 1,
-            data: { packageName, USD, EUR, SGD, CNY, Duration, allowMark }
+            data: { packageName, USD, EUR, SGD, CNY, Duration, allowMark, features }
         });
 
     } catch (error) {
+        if (connection) await connection.rollback();
         console.error('Error during database update:', error);
-
         res.status(500).json({
             status: 500,
             success: false,
@@ -1223,9 +1302,10 @@ router.put('/multiVendorPaymentInfo/amount/update/:packageName', async (req, res
             total: 0,
             data: null
         });
+    } finally {
+        if (connection) connection.release();
     }
 });
-
 
 
 

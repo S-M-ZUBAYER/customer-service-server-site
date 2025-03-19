@@ -109,41 +109,17 @@ app.use(cors()); // Enable CORS
 app.use(express.json()); // Parse JSON payloads
 app.use(express.urlencoded({ extended: false })); // Parse URL-encoded data
 
-// Delay utility function
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Reconnection logic for continuous retries
-const reconnectDatabase = async () => {
-  while (true) {
-    try {
-      const connection = await new Promise((resolve, reject) => {
-        pool.getConnection((err, connection) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(connection);
-          }
-        });
-      });
-
-      connection.release(); // Release the connection back to the pool
-      console.log("Successfully reconnected to the database.");
-      return; // Exit the loop once connected
-    } catch (error) {
-      console.error("Reconnection attempt failed. Retrying in 5 seconds...");
-      await delay(5000); // Wait before retrying
-    }
-  }
-};
-
 // Middleware to check and reconnect to the database
 const checkAndReconnectDatabase = async (req, res, next) => {
   try {
     pool.getConnection((err, connection) => {
       if (err) {
         console.error("Database connection lost. Attempting to reconnect...");
-        reconnectDatabase()
-          .then(() => next())
+        reconnectDatabase(5) // Retry up to 5 times
+          .then(() => {
+            console.log("Reconnected to the database.");
+            next();
+          })
           .catch((reconnectError) => {
             console.error("Reconnection failed:", reconnectError.message);
             return res.status(500).json({
@@ -162,6 +138,28 @@ const checkAndReconnectDatabase = async (req, res, next) => {
       error: "An unexpected error occurred while checking the database connection.",
     });
   }
+};
+
+// Reconnection logic
+const reconnectDatabase = (retries) => {
+  return new Promise((resolve, reject) => {
+    const attemptReconnect = (retryCount) => {
+      pool.getConnection((err, connection) => {
+        if (err) {
+          if (retryCount <= 0) {
+            return reject(err); // Stop retrying after all attempts are exhausted
+          }
+          console.log(`Retrying to connect... (${retries - retryCount + 1})`);
+          setTimeout(() => attemptReconnect(retryCount - 1), 2000); // Retry after 2 seconds
+        } else {
+          console.log("Reconnection successful.");
+          connection.release();
+          resolve(); // Resolve the promise if reconnection is successful
+        }
+      });
+    };
+    attemptReconnect(retries);
+  });
 };
 
 // Use the middleware globally

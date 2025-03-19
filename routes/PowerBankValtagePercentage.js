@@ -53,11 +53,30 @@ router.get('/powerBankModels', async (req, res) => {
 });
 
 
+// router.get('/voltageDetails', async (req, res) => {
+//     const sql = `
+//         SELECT vd.id, vd.battery_percentage, vd.voltage, pb.model_number 
+//         FROM voltageDetails vd
+//         JOIN powerBankModels pb ON vd.model_id = pb.id
+//     `;
+
+//     try {
+//         const rows = await executeQuery(sql);
+//         res.status(200).json({
+//             message: 'Success',
+//             data: rows
+//         });
+//     } catch (err) {
+//         handleError(res, 'Error fetching all voltage details', err);
+//     }
+// });
+
 router.get('/voltageDetails', async (req, res) => {
     const sql = `
         SELECT vd.id, vd.battery_percentage, vd.voltage, pb.model_number 
         FROM voltageDetails vd
         JOIN powerBankModels pb ON vd.model_id = pb.id
+        ORDER BY vd.battery_percentage DESC
     `;
 
     try {
@@ -71,6 +90,8 @@ router.get('/voltageDetails', async (req, res) => {
     }
 });
 
+
+
 router.get('/voltageDetails/:modelNumber', async (req, res) => {
     const modelNumber = req.params.modelNumber;
 
@@ -79,6 +100,7 @@ router.get('/voltageDetails/:modelNumber', async (req, res) => {
         FROM voltageDetails vd
         JOIN powerBankModels pb ON vd.model_id = pb.id
         WHERE pb.model_number = ?
+        ORDER BY vd.battery_percentage DESC
     `;
 
     try {
