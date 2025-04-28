@@ -742,42 +742,6 @@ router.delete('/cropPayment/:id', (req, res) => {
 });
 
 // Multivendor payment Api 
-
-// POST: Add a new MultiVendor payment record
-router.post('/multiVendorPaymentInfo/apply', async (req, res) => {
-    const { email, amount, paymentId, Duration, currency, purpose } = req.body;
-    const paymentTime = new Date();
-
-    // Validation for required fields
-    if (!email || !amount || !paymentId || !Duration || !currency || !purpose) {
-        return res.status(400).json({
-            statusCode: 400,
-            status: "failed",
-            message: "email, amount, paymentId, Duration, currency, and purpose are required"
-        });
-    }
-
-    try {
-        const query = `
-            INSERT INTO multiVendorPaymentInfo (email, paymentStatus, amount, paymentTime, Duration, currency, account_creation_status, purpose, paymentId)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-        await queryDatabase(query, [email, true, amount, paymentTime, Duration, currency, false, purpose, paymentId]);
-
-        res.status(201).json({
-            statusCode: 201,
-            status: "success",
-            message: "MultiVendor payment info added successfully"
-        });
-    } catch (error) {
-        console.error('Error adding MultiVendor payment info:', error);
-        res.status(500).json({
-            statusCode: 500,
-            status: "failed",
-            message: "Internal Server Error"
-        });
-    }
-});
 // POST: Create MultiVendor crop payment intent with Stripe
 router.post("/create-multiVendorPayment-intent/create", async (req, res) => {
     const { amount, email, currency, purpose, Duration, paymentId } = req.body;
@@ -809,10 +773,10 @@ router.post("/create-multiVendorPayment-intent/create", async (req, res) => {
             // Update existing record
             const updateQuery = `
                 UPDATE multiVendorPaymentInfo
-                SET amount = ?, currency = ?, account_creation_status = ?, paymentTime = ?, purpose = ?, Duration = ?, paymentId = ?, paymentStatus = ?
+                SET amount = ?, currency = ?, account_creation_status = ?, paymentTime = ?, purpose = ?, Duration = ?, paymentId = ?, paymentStatus = ?, subscriptionStatus=?
                 WHERE email = ?
             `;
-            await queryDatabase(updateQuery, [amount, currency, false, paymentTime, purpose, Duration, paymentId, true, email]);
+            await queryDatabase(updateQuery, [amount, currency, false, paymentTime, purpose, Duration, paymentId, true, true, email]);
 
             res.status(200).json({
                 status: 200,
@@ -823,10 +787,10 @@ router.post("/create-multiVendorPayment-intent/create", async (req, res) => {
         } else {
             // Insert new record
             const insertQuery = `
-                INSERT INTO multiVendorPaymentInfo (amount, currency, email, account_creation_status, paymentId, paymentStatus, paymentTime, purpose)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO multiVendorPaymentInfo (amount, currency, email, account_creation_status, paymentId, paymentStatus,subscriptionStatus, paymentTime, purpose)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
-            await queryDatabase(insertQuery, [amount, currency, email, false, paymentId, true, paymentTime, purpose]);
+            await queryDatabase(insertQuery, [amount, currency, email, false, paymentId, true, true, paymentTime, purpose]);
 
             res.status(201).json({
                 status: 201,
@@ -844,469 +808,6 @@ router.post("/create-multiVendorPayment-intent/create", async (req, res) => {
         });
     }
 });
-
-router.put("/multiVendorPaymentInfo/update", async (req, res) => {
-    const { amount, email, currency, purpose, Duration, paymentId, paymentTime, paymentStatus, account_creation_status } = req.body;
-    console.log({ amount, email, currency, purpose, Duration, paymentId, paymentTime, paymentStatus, account_creation_status });
-
-    // Validate request body
-    if (!amount || !email || !currency || !purpose || !Duration || !paymentId || !paymentTime || !account_creation_status || !paymentStatus) {
-        return res.status(400).json({
-            status: 400,
-            success: false,
-            message: "Amount, email, currency, duration, paymentId, paymentTime, account_creation_status, paymentStatus, and purpose are required"
-        });
-    }
-
-    try {
-        const updateQuery = `
-            UPDATE multiVendorPaymentInfo
-            SET amount = ?, currency = ?, account_creation_status = ?, paymentTime = ?, purpose = ?, Duration = ?, paymentId = ?, paymentStatus = ?
-            WHERE email = ?
-        `;
-
-        const result = await queryDatabase(updateQuery, [
-            amount, currency, account_creation_status, paymentTime, purpose, Duration, paymentId, paymentStatus, email
-        ]);
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({
-                status: 404,
-                success: false,
-                message: "No record found for the provided email"
-            });
-        }
-
-        res.status(200).json({
-            status: 200,
-            success: true,
-            message: "MultiVendor payment info updated successfully"
-        });
-    } catch (error) {
-        console.error("Error updating MultiVendor payment info:", error);
-        res.status(500).json({
-            status: 500,
-            success: false,
-            message: "Internal Server Error"
-        });
-    }
-});
-
-
-// GET: Fetch all MultiVendor payments
-router.get('/multiVendorPaymentInfo/all', async (req, res) => {
-    const query = 'SELECT * FROM multiVendorPaymentInfo';
-
-    try {
-        const results = await queryDatabase(query, []);
-
-        res.status(200).json({
-            status: 200,
-            success: true,
-            message: "MultiVendor payment data fetched successfully",
-            data: results
-        });
-    } catch (error) {
-        console.error('Error fetching MultiVendor payment data:', error);
-
-        res.status(500).json({
-            status: 500,
-            success: false,
-            message: "Internal Server Error",
-            data: []
-        });
-    }
-});
-
-
-router.get('/multiVendorInfo/:id', async (req, res) => {
-    console.log();
-
-    const { id } = req.params;
-    const query = 'SELECT * FROM multiVendorPaymentInfo WHERE id = ?';
-
-    try {
-        const results = await queryDatabase(query, [id]);
-
-        // Check if results exist and extract the correct data
-        if (!results || results.length === 0) {
-            return res.status(404).json({
-                status: 404,
-                success: false,
-                message: "MultiVendor payment record not found",
-                total: 0,
-                data: null
-            });
-        }
-
-        // If your DB driver returns results as an array of rows, use results[0]
-        const record = Array.isArray(results[0]) ? results[0][0] : results[0];
-
-        console.log("Fetched Data:", record);
-
-        if (!record) {
-            return res.status(404).json({
-                status: 404,
-                success: false,
-                message: "MultiVendor payment record not found",
-                total: 0,
-                data: null
-            });
-        }
-
-        res.status(200).json({
-            status: 200,
-            success: true,
-            message: "MultiVendor payment record fetched successfully",
-            total: 1, // Since ID is unique, total will always be 1
-            data: results
-        });
-
-    } catch (error) {
-        console.error('Error fetching MultiVendor PaymentInfo payment by ID:', error);
-
-        res.status(500).json({
-            status: 500,
-            success: false,
-            message: "Internal Server Error",
-            total: 0,
-            data: null
-        });
-    }
-});
-// GET: Retrieve multiVendor payment info by email
-router.get('/multiVendorPaymentInfo/:email', async (req, res) => {
-    const email = req.params.email;
-    const query = 'SELECT * FROM multiVendorPaymentInfo WHERE email = ?';
-
-    try {
-        const results = await queryDatabase(query, [email]);
-        if (results.length === 1) {
-            res.json(results[0]);
-        } else {
-            res.send({
-                email: email,
-                paymentStatus: 0
-            });
-        }
-    } catch (error) {
-        console.error('Error retrieving crop payment info:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
-
-// DELETE: Remove a payment record by ID
-router.delete('/multiVendorInfo/delete/:id', async (req, res) => {
-    const { id } = req.params;
-    const query = 'DELETE FROM multiVendorPaymentInfo WHERE id = ?';
-
-    try {
-        const result = await queryDatabase(query, [id]);
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({
-                status: 404,
-                success: false,
-                message: "MultiVendor payment record not found",
-                total: 0
-            });
-        }
-
-        res.status(200).json({
-            status: 200,
-            success: true,
-            message: "MultiVendor payment record deleted successfully",
-            total: 1
-        });
-
-    } catch (error) {
-        console.error('Error deleting MultiVendor PaymentInfo record:', error);
-
-        res.status(500).json({
-            status: 500,
-            success: false,
-            message: "Internal Server Error",
-            total: 0
-        });
-    }
-});
-
-
-
-// POST request to add data for MultiVendor payment
-
-router.get('/multiVendorPackage/amount', async (req, res) => {
-    try {
-        const query = `
-            SELECT 
-                p.id, p.packageName, p.Duration, p.allowMark, p.USD, p.EUR, p.SGD, p.CNY,
-                f.feature
-            FROM 
-                multiVendorPaymentAmount p
-            LEFT JOIN 
-                multiVendorPackageFeatures f ON p.id = f.package_id
-        `;
-        const result = await queryDatabase(query);
-
-        if (!result || result.length === 0) {
-            return res.status(404).json({
-                status: 404,
-                success: false,
-                message: 'No records found',
-                total: 0,
-                data: []
-            });
-        }
-
-        // Organize data into the desired structure
-        const packages = result.reduce((acc, row) => {
-            if (!acc[row.id]) {
-                acc[row.id] = {
-                    id: row.id,
-                    packageName: row.packageName,
-                    Duration: row.Duration,
-                    allowMark: row.allowMark,
-                    currency: {
-                        USD: row.USD,
-                        EUR: row.EUR,
-                        SGD: row.SGD,
-                        CNY: row.CNY
-                    },
-                    features: []
-                };
-            }
-            if (row.feature) {
-                acc[row.id].features.push(row.feature);
-            }
-            return acc;
-        }, {});
-
-        res.status(200).json({
-            status: 200,
-            success: true,
-            message: 'Records retrieved successfully',
-            total: Object.keys(packages).length,
-            data: Object.values(packages)
-        });
-
-    } catch (error) {
-        console.error('Error retrieving MultiVendor PaymentInfo records:', error);
-
-        res.status(500).json({
-            status: 500,
-            success: false,
-            message: 'An error occurred while fetching the records',
-            total: 0,
-            data: null
-        });
-    }
-});
-
-router.get('/multiVendorPaymentInfo/amount/:packageName', async (req, res) => {
-    const { packageName } = req.params;
-
-    try {
-        const query = `
-            SELECT 
-                m.id, m.packageName, m.USD, m.EUR, m.SGD, m.CNY, m.Duration, m.allowMark, f.feature
-            FROM 
-                multiVendorPaymentAmount m
-            LEFT JOIN 
-                multivendorpackagefeatures f ON m.id = f.package_id
-            WHERE 
-                m.packageName = ?
-        `;
-        const result = await queryDatabase(query, [packageName]);
-
-        if (!result || result.length === 0) {
-            return res.status(404).json({
-                status: 404,
-                success: false,
-                message: 'No record found for the provided packageName',
-                total: 0,
-                data: null
-            });
-        }
-
-        // Extracting and restructuring the first record
-        const record = result[0];
-        const formattedData = {
-            id: record.id,
-            packageName: record.packageName,
-            Duration: record.Duration,
-            allowMark: record.allowMark,
-            currency: {
-                USD: record.USD,
-                EUR: record.EUR,
-                SGD: record.SGD,
-                CNY: record.CNY
-            },
-            features: result.filter(row => row.feature).map(row => row.feature)
-        };
-
-        res.status(200).json({
-            status: 200,
-            success: true,
-            message: 'Data retrieved successfully',
-            total: 1,
-            data: formattedData
-        });
-
-    } catch (error) {
-        console.error('Error retrieving data:', error);
-
-        res.status(500).json({
-            status: 500,
-            success: false,
-            message: 'An error occurred while retrieving the record',
-            total: 0,
-            data: null
-        });
-    }
-});
-
-router.post('/multiVendorPaymentInfo/amount', async (req, res) => {
-    const { packageName, USD, EUR, SGD, CNY, Duration, allowMark, features } = req.body;
-
-    // Validate input
-    if (!packageName || isNaN(USD) || isNaN(EUR) || isNaN(SGD) || isNaN(CNY) || isNaN(Duration) || isNaN(allowMark) || !Array.isArray(features)) {
-        return res.status(400).json({
-            status: 400,
-            success: false,
-            message: 'Invalid input: All currency values, Duration, and allowMark must be numbers. Features must be an array.',
-            total: 0,
-            data: null
-        });
-    }
-
-    const paymentQuery = `INSERT INTO multiVendorPaymentAmount (packageName, USD, EUR, SGD, CNY, Duration, allowMark) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-
-    try {
-        // Insert payment details
-        const paymentResult = await queryDatabase(paymentQuery, [packageName, USD, EUR, SGD, CNY, Duration, allowMark]);
-
-        if (!paymentResult || paymentResult.affectedRows === 0) {
-            return res.status(500).json({
-                status: 500,
-                success: false,
-                message: 'Failed to add MultiVendor payment record',
-                total: 0,
-                data: null
-            });
-        }
-
-        const packageId = paymentResult.insertId;
-
-        // Insert features into multiVendorPaymentFeatures table
-        const featureQuery = `INSERT INTO multiVendorPackageFeatures (package_id, feature) VALUES (?, ?)`;
-        for (const feature of features) {
-            await queryDatabase(featureQuery, [packageId, feature]);
-        }
-
-        res.status(201).json({
-            status: 201,
-            success: true,
-            message: 'MultiVendor payment record added successfully with features',
-            total: 1,
-            data: {
-                id: packageId,
-                packageName,
-                currency: { USD, EUR, SGD, CNY },
-                Duration,
-                allowMark,
-                features
-            }
-        });
-
-    } catch (error) {
-        console.error('Error adding MultiVendor PaymentInfo record:', error);
-
-        res.status(500).json({
-            status: 500,
-            success: false,
-            message: 'An error occurred while adding the record',
-            total: 0,
-            data: null
-        });
-    }
-});
-
-router.put('/multiVendorPaymentInfo/amount/update/:packageName', async (req, res) => {
-    const { packageName } = req.params;
-    const { USD, EUR, SGD, CNY, Duration, allowMark, features } = req.body;
-
-    // Input validation
-    if (
-        [USD, EUR, SGD, CNY, Duration, allowMark].some(value => value === undefined || value === null || isNaN(value)) ||
-        !Array.isArray(features)
-    ) {
-        return res.status(400).json({
-            status: 400,
-            success: false,
-            message: 'Invalid input: Currency values, Duration, and allowMark must be valid numbers; features must be an array.',
-            total: 0,
-            data: null
-        });
-    }
-
-    let connection;
-    try {
-        connection = await pool.getConnection();
-        await connection.beginTransaction();
-
-        const query = `
-            UPDATE multiVendorPaymentAmount 
-            SET USD = ?, EUR = ?, SGD = ?, CNY = ?, Duration = ?, allowMark = ?
-            WHERE packageName = ?
-        `;
-        const [result] = await connection.query(query, [USD, EUR, SGD, CNY, Duration, allowMark, packageName]);
-
-        if (result.affectedRows === 0) {
-            await connection.rollback();
-            return res.status(404).json({
-                status: 404,
-                success: false,
-                message: 'No record found for the provided packageName',
-                total: 0,
-                data: null
-            });
-        }
-
-        // Delete existing features
-        const deleteFeaturesQuery = `DELETE FROM multiVendorPackageFeatures WHERE package_id = ?`;
-        await connection.query(deleteFeaturesQuery, [packageName]);
-
-        // Insert new features
-        const insertFeatureQuery = `INSERT INTO multiVendorPackageFeatures (package_id, feature) VALUES (?, ?)`;
-        for (const feature of features) {
-            await connection.query(insertFeatureQuery, [packageName, feature]);
-        }
-
-        await connection.commit();
-
-        res.status(200).json({
-            status: 200,
-            success: true,
-            message: 'Record and features updated successfully',
-            total: 1,
-            data: { packageName, USD, EUR, SGD, CNY, Duration, allowMark, features }
-        });
-
-    } catch (error) {
-        if (connection) await connection.rollback();
-        console.error('Error during database update:', error);
-        res.status(500).json({
-            status: 500,
-            success: false,
-            message: 'An error occurred while updating the record',
-            total: 0,
-            data: null
-        });
-    } finally {
-        if (connection) connection.release();
-    }
-});
-
 
 
 // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -1361,43 +862,86 @@ const storePayment = async (req, res) => {
         }
 
         const paymentIntent = await stripe.paymentIntents.retrieve(paymentId);
+
         if (!paymentIntent || !paymentIntent.amount || !paymentIntent.currency || !paymentIntent.status) {
             throw new Error("Missing required payment intent details");
+        }
+
+        let emailIntent = "N/A";
+        if (paymentIntent.latest_charge) {
+            const charge = await stripe.charges.retrieve(paymentIntent.latest_charge);
+            emailIntent = charge.billing_details.email || email;
         }
 
         const paymentData = {
             paymentId: paymentIntent.id,
             amount: paymentIntent.amount / 100,
             currency: paymentIntent.currency,
-            status: paymentIntent.status,
-            email: paymentIntent.receipt_email || email,
+            email: paymentIntent.receipt_email || emailIntent,
             purpose,
             duration,
+            paymentStatus: true,
+            account_creation_status: false,
+            subscriptionStatus: true,
             paymentTime: new Date(paymentIntent.created * 1000),
         };
 
-        const query = `INSERT INTO payments (paymentId, amount, currency, status, email, purpose, duration, paymentTime) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-        const values = [
-            paymentData.paymentId,
-            paymentData.amount,
-            paymentData.currency,
-            paymentData.status,
-            paymentData.email,
-            paymentData.purpose,
-            paymentData.duration,
-            paymentData.paymentTime,
-        ];
+        // Check if the email already exists in the database
+        const checkQuery = `SELECT * FROM multiVendorPaymentInfo WHERE email = ?`;
+        const existingPayment = await queryDatabase(checkQuery, [paymentData.email]);
 
-        const connection = await pool.getConnection();
-        await connection.execute(query, values);
-        connection.release();
+        if (existingPayment.length > 0) {
+            // Email exists -> Update the existing record
+            const updateQuery = `
+                UPDATE multiVendorPaymentInfo 
+                SET paymentId = ?, amount = ?, currency = ?, purpose = ?, duration = ?, 
+                    paymentStatus = ?, account_creation_status = ?, subscriptionStatus = ?, paymentTime = ?
+                WHERE email = ?`;
 
-        res.status(200).json({ message: "Payment saved successfully", payment: paymentData });
+            const updateValues = [
+                paymentData.paymentId,
+                paymentData.amount,
+                paymentData.currency,
+                paymentData.purpose,
+                paymentData.duration,
+                paymentData.paymentStatus,
+                paymentData.account_creation_status,
+                paymentData.subscriptionStatus,
+                paymentData.paymentTime,
+                paymentData.email,
+            ];
+
+            await queryDatabase(updateQuery, updateValues);
+            return res.status(200).json({ message: "Payment record updated successfully", payment: paymentData });
+        } else {
+            // Email does not exist -> Insert a new record
+            const insertQuery = `
+                INSERT INTO multiVendorPaymentInfo 
+                (paymentId, amount, currency, email, purpose, duration, paymentStatus, account_creation_status, subscriptionStatus, paymentTime) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+            const insertValues = [
+                paymentData.paymentId,
+                paymentData.amount,
+                paymentData.currency,
+                paymentData.email,
+                paymentData.purpose,
+                paymentData.duration,
+                paymentData.paymentStatus,
+                paymentData.account_creation_status,
+                paymentData.subscriptionStatus,
+                paymentData.paymentTime,
+            ];
+
+            await queryDatabase(insertQuery, insertValues);
+            return res.status(200).json({ message: "Payment saved successfully", payment: paymentData });
+        }
     } catch (error) {
         console.error("Error saving payment:", error.message);
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 };
+
 
 router.post("/payment-intent", payment);
 router.post("/store-payment", storePayment);

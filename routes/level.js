@@ -740,10 +740,12 @@ router.delete('/mainContainers/delete/:id', async (req, res) => {
 router.post('/widgetContainers/add', async (req, res) => {
   const {
     mainContainerId,
+    type,
     widgetType,  // Updated field
     contentData,
     offsetDx,
     offsetDy,
+    widthSize,
     width,  // Updated field
     height,
     rotation,
@@ -752,6 +754,7 @@ router.post('/widgetContainers/add', async (req, res) => {
     isUnderline,
     isItalic,
     fontSize,
+    alignment,
     textAlignment, // Updated field
     checkTextIdentifyWidget, // New field (type: text)
     barEncodingType, // New field (type: text)
@@ -768,6 +771,7 @@ router.post('/widgetContainers/add', async (req, res) => {
     isRoundRectangale,
     isCircularFixed,
     isCircularNotFixed,
+    sliderLineWidth,
     widgetLineWidth,  // Updated field
     isFixedFigureSize,  // New field
     trueShapeWidth, // New field (type: double)
@@ -786,10 +790,12 @@ router.post('/widgetContainers/add', async (req, res) => {
   const dataToStore = {
     mainContainerId,
     widgetType,
+    type,
     contentData,
     offsetDx,
     offsetDy,
     width,
+    widthSize,
     height: height || null,
     rotation: rotation,
     selectTimeTextScanInt: selectTimeTextScanInt || null,
@@ -798,6 +804,7 @@ router.post('/widgetContainers/add', async (req, res) => {
     isItalic: isItalic || 0,
     fontSize: fontSize,
     textAlignment: textAlignment || "left",
+    alignment: alignment || "left",
     checkTextIdentifyWidget,
     barEncodingType,
     rowCount: rowCount || null,
@@ -814,6 +821,7 @@ router.post('/widgetContainers/add', async (req, res) => {
     isCircularFixed: isCircularFixed || 0,
     isCircularNotFixed: isCircularNotFixed || 0,
     widgetLineWidth,
+    sliderLineWidth,
     isFixedFigureSize: isFixedFigureSize || 0,
     trueShapeWidth,
     trueShapeHeight,
@@ -830,21 +838,23 @@ router.post('/widgetContainers/add', async (req, res) => {
 
   try {
     const sql = `INSERT INTO widgetcontainertable 
-    (mainContainerId, widgetType, contentData, offsetDx, offsetDy, width, height, rotation, selectTimeTextScanInt, 
-    isBold, isUnderline, isItalic, fontSize, textAlignment, checkTextIdentifyWidget, barEncodingType, rowCount, columnCount, 
+    (mainContainerId, widgetType,type, contentData, offsetDx, offsetDy, width,widthSize, height, rotation, selectTimeTextScanInt,
+    isBold, isUnderline, isItalic, fontSize, textAlignment,alignment, checkTextIdentifyWidget, barEncodingType, rowCount, columnCount,
     tablesCells, tablesRowHeights, tablesColumnWidths, selectedEmojiIcons, prefix, suffix, shapeTypes, 
-    isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth, isFixedFigureSize, 
+    isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth,sliderLineWidth, isFixedFigureSize,
     trueShapeWidth, trueShapeHeight, isDottedLine, columnWidths, rowHeights, cellTexts, tableTextAlignment, 
     tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize) 
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
     const result = await queryDatabase(sql, [
       dataToStore.mainContainerId,
       dataToStore.widgetType,
+      dataToStore.type,
       dataToStore.contentData,
       dataToStore.offsetDx,
       dataToStore.offsetDy,
       dataToStore.width,
+      dataToStore.widthSize,
       dataToStore.height,
       dataToStore.rotation,
       dataToStore.selectTimeTextScanInt,
@@ -852,6 +862,7 @@ router.post('/widgetContainers/add', async (req, res) => {
       dataToStore.isUnderline,
       dataToStore.isItalic,
       dataToStore.fontSize,
+      dataToStore.alignment,
       dataToStore.textAlignment,
       dataToStore.checkTextIdentifyWidget,
       dataToStore.barEncodingType,
@@ -869,6 +880,7 @@ router.post('/widgetContainers/add', async (req, res) => {
       dataToStore.isCircularFixed,
       dataToStore.isCircularNotFixed,
       dataToStore.widgetLineWidth,
+      dataToStore.sliderLineWidth,
       dataToStore.isFixedFigureSize,
       dataToStore.trueShapeWidth,
       dataToStore.trueShapeHeight,
@@ -908,34 +920,62 @@ router.get('/widgetContainers/get', async (req, res) => {
 });
 
 // Get widget containers by main container id
-router.get('/widgetContainers/getMain/:id', async (req, res) => {
+router.get('/widgetContainers/getMain/:id', (req, res) => {
   const mainContainerId = req.params.id;
 
-  try {
-    const sql = `
-      SELECT id, mainContainerId, widgetType, contentData, offsetDx, offsetDy, isBold, isUnderline, isItalic, fontSize, textAlignment, rotation, width, height,
-             selectTimeTextScanInt, prefix, suffix, 
-             CONVERT(selectedEmojiIcons USING utf8) AS selectedEmojiIcons, 
-             isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth,
-             isDottedLine, rowCount, columnCount, tablesColumnWidths, tablesRowHeights, tablesCells, 
-             tableTextAlignment, tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize,
-             checkTextIdentifyWidget, barEncodingType, shapeTypes, isFixedFigureSize, trueShapeWidth, trueShapeHeight
-      FROM widgetcontainertable 
-      WHERE mainContainerId = ?
-    `;
+  const sql = `
+    SELECT id, mainContainerId, type, contentData, offsetDx, offsetDy, isBold, isUnderline, isItalic, fontSize, alignment, rotation, widthSize, height,
+           selectTimeTextScanInt, prefix, suffix, 
+           CONVERT(selectedEmojiIcons USING utf8) AS selectedEmojiIcons, 
+           isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, sliderLineWidth,
+           isDottedLine, rowCount, columnCount, columnWidths, rowHeights, cellTexts, 
+           tableTextAlignment, tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize
+    FROM widgetcontainertable 
+    WHERE mainContainerId = ?
+  `;
 
-    const results = await queryDatabase(sql, [mainContainerId]);
+  connection.query(sql, [mainContainerId], (err, results) => {
+    if (err) {
+      console.error("Error fetching widget data:", err.message);
+      return res.status(500).json({ error: "An error occurred while fetching widget data." });
+    }
     if (results.length === 0) {
       console.log(`No data found for mainContainerId: ${mainContainerId}`);
       return res.json([]);
     }
-
     res.json(results);
-  } catch (err) {
-    console.error("Error fetching widget data:", err.message);
-    return res.status(500).json({ error: "An error occurred while fetching widget data." });
-  }
+  });
 });
+
+
+// router.get('/widgetContainers/getMain/:id', async (req, res) => {
+//   const mainContainerId = req.params.id;
+
+//   try {
+//     const sql = `
+//       SELECT id, mainContainerId, type,widgetType, contentData, offsetDx, offsetDy, isBold, isUnderline, isItalic, fontSize, alignment,textAlignment, rotation,width, widthSize, height,
+//              selectTimeTextScanInt, prefix, suffix, 
+//              CONVERT(selectedEmojiIcons USING utf8) AS selectedEmojiIcons, 
+//              isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth,sliderLineWidth,
+//              isDottedLine, rowCount, columnCount, tablesColumnWidths, tablesRowHeights, tablesCells, 
+//              tableTextAlignment, tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize,
+//              checkTextIdentifyWidget, barEncodingType, shapeTypes, isFixedFigureSize, trueShapeWidth, trueShapeHeight
+//       FROM widgetcontainertable 
+//       WHERE mainContainerId = ?
+//     `;
+
+//     const results = await queryDatabase(sql, [mainContainerId]);
+//     if (results.length === 0) {
+//       console.log(`No data found for mainContainerId: ${mainContainerId}`);
+//       return res.json([]);
+//     }
+
+//     res.json(results);
+//   } catch (err) {
+//     console.error("Error fetching widget data:", err.message);
+//     return res.status(500).json({ error: "An error occurred while fetching widget data." });
+//   }
+// });
 
 // Delete all widgets for a main container
 router.delete('/widgetContainers/multiDelete/:mainId', async (req, res) => {
