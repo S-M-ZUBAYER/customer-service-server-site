@@ -232,6 +232,69 @@ router.get('/allUsers', async (req, res) => {
   }
 });
 
+router.get('/admin/info', async (req, res) => {
+  try {
+    const query = 'SELECT * FROM adminInfo WHERE id = ?';
+    const result = await executeQuery(query, [1]);
+
+    if (result.length === 0) {
+      return res.status(404).json({
+        code: 404,
+        message: 'Admin info not found.',
+        result: null
+      });
+    }
+
+    res.status(200).json({
+      code: 200,
+      message: 'Admin info fetched successfully.',
+      result: result[0]
+    });
+  } catch (error) {
+    console.error('Error fetching admin info:', error);
+    res.status(500).json({
+      code: 500,
+      message: 'An error occurred while fetching admin info.',
+      result: null
+    });
+  }
+});
+
+router.put('/admin/info/update', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({
+      code: 400,
+      message: 'Both email and password are required.',
+      result: null
+    });
+  }
+
+  try {
+    const query = `
+      UPDATE adminInfo 
+      SET email = ?, password = ?
+      WHERE id = ?
+    `;
+    const result = await executeQuery(query, [email, password, 1]);
+
+    res.status(200).json({
+      code: 200,
+      message: 'Admin email and password updated successfully.',
+      result
+    });
+  } catch (error) {
+    console.error('Error updating admin info:', error);
+    res.status(500).json({
+      code: 500,
+      message: 'An error occurred while updating admin info.',
+      result: null
+    });
+  }
+});
+
+
 // Route to get a user by email
 router.get('/users', async (req, res) => {
   const { email } = req.query;

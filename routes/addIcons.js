@@ -334,10 +334,10 @@ router.post("/icons/add", upload.array("images"), async (req, res) => {
 
 router.post("/iconCategoriesList/add", async (req, res) => {
   try {
-    const { china, vietnam, indonesia, philippines, malaysia, thailand, english } = req.body;
-    const query = `INSERT INTO alliconcategories (en, zh, vi, idn, fil, ms, th) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    const { china, vietnam, indonesia, philippines, malaysia, thailand, english, japanese } = req.body;
+    const query = `INSERT INTO alliconcategories (en, zh, vi, idn, fil, ms, th, jp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
-    await executeQuery(query, [english, china, vietnam, indonesia, philippines, malaysia, thailand]);
+    await executeQuery(query, [english, china, vietnam, indonesia, philippines, malaysia, thailand, japanese]);
     res.status(201).json({ message: "Category added successfully" });
   } catch (error) {
     console.error("Error adding category:", error);

@@ -260,21 +260,46 @@ router.delete('/city/delete/:id', async (req, res) => {
 });
 
 // POST: Add a new city
-router.post("/cities/add", async (req, res) => {
-  const { warehouseName, cityName } = req.body;
+// router.post("/cities/add", async (req, res) => {
+//   const { warehouseName, cityName } = req.body;
 
-  if (!warehouseName || !cityName) {
-    return res.status(400).json({ error: "warehouseName and cityName are required." });
+//   if (!warehouseName || !cityName) {
+//     return res.status(400).json({ error: "warehouseName and cityName are required." });
+//   }
+
+//   try {
+//     const query = "INSERT INTO allcitynamelist (cityName, warehouseName) VALUES (?, ?)";
+//     await executeQuery(query, [cityName, warehouseName]);
+//     res.status(201).json({ message: "City added successfully." });
+//   } catch (error) {
+//     if (error.code === 'ER_DUP_ENTRY') {
+//       return res.status(409).json({ error: "City already exists." });
+//     }
+
+//     console.error("Error adding city:", error.message);
+//     res.status(500).json({ error: "An error occurred while adding the city." });
+//   }
+// });
+
+router.post('/cities/add', async (req, res) => {
+  const { cityName, warehouseName } = req.body;
+
+  if (!cityName || !warehouseName) {
+    return res.status(400).json({ error: 'Both cityName and warehouseName are required.' });
   }
 
   try {
-    const query = "INSERT INTO allcitynamelist (cityName, warehouseName) VALUES (?, ?)";
-    await executeQuery(query, [cityName, warehouseName]);
-    res.status(201).json({ message: "City added successfully." });
+    const query = 'INSERT INTO allCityNameList (cityName, warehouseName) VALUES (?, ?)';
+    const result = await executeQuery(query, [cityName, warehouseName]);
+    res.status(201).json({
+      message: 'City added successfully.',
+      id: result.insertId
+    });
   } catch (error) {
-    console.error("Error adding city:", error);
-    res.status(500).json({ error: "An error occurred while adding the city." });
+    console.error('Error adding city:', error);
+    res.status(500).json({ error: 'An error occurred while adding the city.' });
   }
 });
+
 
 module.exports = router;
