@@ -33,11 +33,126 @@ const queryDatabase = async (sql, params) => {
 };
 
 
+// router.post('/newVersion/mainContainers/add', async (req, res) => {
+//     try {
+//         const { containerName, containerHeight, containerWidth, containerImageBitmapData, subCategories, printerType } = req.body;
+//         const sql = `INSERT INTO maincontainertable_newversion (containerName, containerHeight, containerWidth, containerImageBitmapData, subCategories, printerType) VALUES (?, ?, ?, ?, ?, ?)`;
+//         const result = await queryDB(sql, [containerName, containerHeight, containerWidth, JSON.stringify(containerImageBitmapData), subCategories, printerType]);
+//         console.log("Successfully inserted data", result);
+//         res.json(result);
+//     } catch (err) {
+//         console.error("Error inserting main container data:", err);
+//         res.status(500).json({ error: "An error occurred while inserting data." });
+//     }
+// });
+
+
+// // Route to update main container by ID
+// router.put('/newVersion/mainContainers/update/:id', async (req, res) => {
+//     try {
+//         const mainContainersId = req.params.id;
+//         const { containerName, containerHeight, containerWidth, containerImageBitmapData, subCategories, printerType } = req.body;
+//         const sql = `UPDATE maincontainertable_newversion SET containerName = ?, containerHeight = ?, containerWidth = ?, containerImageBitmapData = ?, subCategories = ?, printerType = ? WHERE id = ?`;
+//         const result = await queryDB(sql, [containerName, containerHeight, containerWidth, JSON.stringify(containerImageBitmapData), subCategories, printerType, mainContainersId]);
+//         console.log("Successfully updated data", result);
+//         res.json(result);
+//     } catch (err) {
+//         console.error("Error updating main container:", err);
+//         res.status(500).json({ error: "An error occurred while updating data." });
+//     }
+// });
+
+// // Route to get main container by subcategory
+// router.get('/newVersion/mainContainers/:subCategories', async (req, res) => {
+//     try {
+//         const subCategories = req.params.subCategories;
+//         const sql = `SELECT id, containerName, containerHeight, containerWidth, printerType, CONVERT(containerImageBitmapData USING utf8) AS containerImageBitmapData FROM maincontainertable_newversion WHERE subCategories = ?`;
+//         const results = await queryDB(sql, [subCategories]);
+//         res.json(results.length === 0 ? [] : results);
+//     } catch (err) {
+//         console.error('Error fetching data for subCategories:', subCategories, '-', err);
+//         res.status(500).json({ error: 'An error occurred while fetching data.' });
+//     }
+// });
+
+// // Route to get main container by ID
+// router.get('/newVersion/mainContainers/get/main/:id', async (req, res) => {
+//     try {
+//         const id = req.params.id;
+//         const sql = `SELECT id, containerName, containerHeight, containerWidth, convert(containerImageBitmapData using utf8) AS containerImageBitmapData, subCategories, printerType FROM maincontainertable_newversion WHERE id = ?`;
+//         const result = await queryDB(sql, [id]);
+//         if (result.length > 0) {
+//             res.json(result);
+//         } else {
+//             res.json({ message: "No data found for the given subcategory.", data: id });
+//         }
+//     } catch (err) {
+//         console.error("Error fetching data:", err);
+//         res.json({ message: "An error occurred while fetching data.", data: req.params.id });
+//     }
+// });
+
+// // Get all main containers
+// router.get('/newVersion/mainContainers', async (req, res) => {
+//     try {
+//         const sql = `
+//       SELECT 
+//         id, 
+//         containerName, 
+//         containerHeight, 
+//         containerWidth, 
+//         CONVERT(containerImageBitmapData USING utf8) AS containerImageBitmapData, 
+//         subCategories,
+//         printerType 
+//       FROM maincontainertable_newversion
+//     `;
+//         const results = await queryDatabase(sql);
+//         if (results.length === 0) {
+//             console.log("No data found in maincontainertable_newversion.");
+//             return res.json([]);
+//         }
+//         res.json(results);
+//     } catch (err) {
+//         console.error("Error fetching all main container data:", err.message);
+//         return res.status(500).json({ error: "An error occurred while fetching all data." });
+//     }
+// });
+
+// Delete main container and related widget container
+
+// Add main container
+
+
+
 router.post('/newVersion/mainContainers/add', async (req, res) => {
     try {
-        const { containerName, containerHeight, containerWidth, containerImageBitmapData, subCategories, printerType } = req.body;
-        const sql = `INSERT INTO maincontainertable_newversion (containerName, containerHeight, containerWidth, containerImageBitmapData, subCategories, printerType) VALUES (?, ?, ?, ?, ?, ?)`;
-        const result = await queryDB(sql, [containerName, containerHeight, containerWidth, JSON.stringify(containerImageBitmapData), subCategories, printerType]);
+        const {
+            containerName,
+            containerHeight,
+            containerWidth,
+            responsiveHeight,
+            responsiveWidth,
+            containerImageBitmapData,
+            subCategories,
+            printerType
+        } = req.body;
+
+        const sql = `
+            INSERT INTO maincontainertable_newversion 
+            (containerName, containerHeight, containerWidth, responsiveHeight, responsiveWidth, containerImageBitmapData, subCategories, printerType)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        const result = await queryDB(sql, [
+            containerName,
+            containerHeight,
+            containerWidth,
+            responsiveHeight,
+            responsiveWidth,
+            JSON.stringify(containerImageBitmapData),
+            subCategories,
+            printerType
+        ]);
+
         console.log("Successfully inserted data", result);
         res.json(result);
     } catch (err) {
@@ -46,14 +161,39 @@ router.post('/newVersion/mainContainers/add', async (req, res) => {
     }
 });
 
-
-// Route to update main container by ID
+// Update main container
 router.put('/newVersion/mainContainers/update/:id', async (req, res) => {
     try {
         const mainContainersId = req.params.id;
-        const { containerName, containerHeight, containerWidth, containerImageBitmapData, subCategories, printerType } = req.body;
-        const sql = `UPDATE maincontainertable_newversion SET containerName = ?, containerHeight = ?, containerWidth = ?, containerImageBitmapData = ?, subCategories = ?, printerType = ? WHERE id = ?`;
-        const result = await queryDB(sql, [containerName, containerHeight, containerWidth, JSON.stringify(containerImageBitmapData), subCategories, printerType, mainContainersId]);
+        const {
+            containerName,
+            containerHeight,
+            containerWidth,
+            responsiveHeight,
+            responsiveWidth,
+            containerImageBitmapData,
+            subCategories,
+            printerType
+        } = req.body;
+
+        const sql = `
+            UPDATE maincontainertable_newversion 
+            SET containerName = ?, containerHeight = ?, containerWidth = ?, responsiveHeight = ?, responsiveWidth = ?, 
+                containerImageBitmapData = ?, subCategories = ?, printerType = ? 
+            WHERE id = ?
+        `;
+        const result = await queryDB(sql, [
+            containerName,
+            containerHeight,
+            containerWidth,
+            responsiveHeight,
+            responsiveWidth,
+            JSON.stringify(containerImageBitmapData),
+            subCategories,
+            printerType,
+            mainContainersId
+        ]);
+
         console.log("Successfully updated data", result);
         res.json(result);
     } catch (err) {
@@ -62,11 +202,18 @@ router.put('/newVersion/mainContainers/update/:id', async (req, res) => {
     }
 });
 
-// Route to get main container by subcategory
+// Get by subcategory
 router.get('/newVersion/mainContainers/:subCategories', async (req, res) => {
     try {
         const subCategories = req.params.subCategories;
-        const sql = `SELECT id, containerName, containerHeight, containerWidth, printerType, CONVERT(containerImageBitmapData USING utf8) AS containerImageBitmapData FROM maincontainertable_newversion WHERE subCategories = ?`;
+        const sql = `
+            SELECT 
+                id, containerName, containerHeight, containerWidth, responsiveHeight, responsiveWidth,
+                printerType,
+                CONVERT(containerImageBitmapData USING utf8) AS containerImageBitmapData 
+            FROM maincontainertable_newversion 
+            WHERE subCategories = ?
+        `;
         const results = await queryDB(sql, [subCategories]);
         res.json(results.length === 0 ? [] : results);
     } catch (err) {
@@ -75,17 +222,20 @@ router.get('/newVersion/mainContainers/:subCategories', async (req, res) => {
     }
 });
 
-// Route to get main container by ID
+// Get by ID
 router.get('/newVersion/mainContainers/get/main/:id', async (req, res) => {
     try {
         const id = req.params.id;
-        const sql = `SELECT id, containerName, containerHeight, containerWidth, convert(containerImageBitmapData using utf8) AS containerImageBitmapData, subCategories, printerType FROM maincontainertable_newversion WHERE id = ?`;
+        const sql = `
+            SELECT 
+                id, containerName, containerHeight, containerWidth, responsiveHeight, responsiveWidth,
+                convert(containerImageBitmapData using utf8) AS containerImageBitmapData,
+                subCategories, printerType 
+            FROM maincontainertable_newversion 
+            WHERE id = ?
+        `;
         const result = await queryDB(sql, [id]);
-        if (result.length > 0) {
-            res.json(result);
-        } else {
-            res.json({ message: "No data found for the given subcategory.", data: id });
-        }
+        res.json(result.length > 0 ? result : { message: "No data found for the given subcategory.", data: id });
     } catch (err) {
         console.error("Error fetching data:", err);
         res.json({ message: "An error occurred while fetching data.", data: req.params.id });
@@ -96,16 +246,12 @@ router.get('/newVersion/mainContainers/get/main/:id', async (req, res) => {
 router.get('/newVersion/mainContainers', async (req, res) => {
     try {
         const sql = `
-      SELECT 
-        id, 
-        containerName, 
-        containerHeight, 
-        containerWidth, 
-        CONVERT(containerImageBitmapData USING utf8) AS containerImageBitmapData, 
-        subCategories,
-        printerType 
-      FROM maincontainertable_newversion
-    `;
+            SELECT 
+                id, containerName, containerHeight, containerWidth, responsiveHeight, responsiveWidth,
+                CONVERT(containerImageBitmapData USING utf8) AS containerImageBitmapData, 
+                subCategories, printerType 
+            FROM maincontainertable_newversion
+        `;
         const results = await queryDatabase(sql);
         if (results.length === 0) {
             console.log("No data found in maincontainertable_newversion.");
@@ -118,7 +264,7 @@ router.get('/newVersion/mainContainers', async (req, res) => {
     }
 });
 
-// Delete main container and related widget container
+
 router.delete('/newVersion/mainContainers/delete/:id', async (req, res) => {
     const mainContainersId = req.params.id;
 
