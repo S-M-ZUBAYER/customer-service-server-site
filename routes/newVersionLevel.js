@@ -325,7 +325,8 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
         tableTextBold,
         tableTextUnderline,
         tableTextItalic,
-        tableTextFontSize
+        tableTextFontSize,
+        fontFamily
     } = req.body;
 
     const dataToStore = {
@@ -371,6 +372,7 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
         tableTextUnderline: tableTextUnderline || 0,
         tableTextItalic: tableTextItalic || 0,
         tableTextFontSize: tableTextFontSize || null,
+        fontFamily: fontFamily || null,
     };
 
     try {
@@ -380,8 +382,8 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
     tablesCells, tablesRowHeights, tablesColumnWidths, selectedEmojiIcons, prefix, suffix, shapeTypes, 
     isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth, isFixedFigureSize, 
     trueShapeWidth, trueShapeHeight, isDottedLine, columnWidths, rowHeights, cellTexts, tableTextAlignment, 
-    tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize) 
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+    tableTextBold, tableTextUnderline, tableTextItalic, ,fontFamily)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
         const result = await queryDatabase(sql, [
             dataToStore.mainContainerId,
@@ -425,7 +427,8 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
             dataToStore.tableTextBold,
             dataToStore.tableTextUnderline,
             dataToStore.tableTextItalic,
-            dataToStore.tableTextFontSize
+            dataToStore.tableTextFontSize,
+            dataToStore.fontFamily
         ]);
 
         console.log("Successfully inserted data", result);
@@ -464,7 +467,7 @@ router.get('/newVersion/widgetContainers/getMain/:id', async (req, res) => {
              isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth,sliderLineWidth,
              isDottedLine, rowCount, columnCount, tablesColumnWidths, tablesRowHeights, tablesCells, 
              tableTextAlignment, tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize,
-             checkTextIdentifyWidget, barEncodingType, shapeTypes, isFixedFigureSize, trueShapeWidth, trueShapeHeight
+             checkTextIdentifyWidget, barEncodingType, shapeTypes, isFixedFigureSize, trueShapeWidth, trueShapeHeight,fontFamily
       FROM widgetcontainertable_newversion
       WHERE mainContainerId = ?
     `;
