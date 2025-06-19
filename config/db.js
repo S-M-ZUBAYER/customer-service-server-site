@@ -41,6 +41,12 @@ const pool = mysql.createPool({
   connectionLimit: 10, // Maximum number of connections in the pool
   waitForConnections: true, // Queue connection requests if all are in use
   queueLimit: 0, // No limit to the number of queued requests
+  supportBigNumbers: true,
+  bigNumberStrings: true,
+  multipleStatements: true,
+  connectTimeout: 10000,
+  // ⬇️ Increase this
+  maxPacketSize: 64 * 1024 * 1024, // 64 MB
 });
 
 
