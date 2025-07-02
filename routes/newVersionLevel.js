@@ -11,6 +11,8 @@ const sharp = require("sharp");
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 // Helper function for database queries to avoid repeated try-catch blocks
 const queryDB = async (sql, params) => {
     return new Promise((resolve, reject) => {
@@ -33,8 +35,48 @@ const queryDatabase = async (sql, params) => {
         });
     });
 };
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
+// router.post('/newVersion/mainContainers/add', async (req, res) => {
+//     try {
+//         const {
+//             containerName,
+//             containerHeight,
+//             containerWidth,
+//             responsiveHeight,
+//             responsiveWidth,
+//             containerImageBitmapData,
+//             subCategories,
+//             printerType
+//         } = req.body;
+
+//         // Always convert to float (which will be stored as DOUBLE in MySQL)
+//         const formattedResponsiveHeight = parseFloat(responsiveHeight);
+//         const formattedResponsiveWidth = parseFloat(responsiveWidth);
+
+//         const sql = `
+//             INSERT INTO maincontainertable_newversion 
+//             (containerName, containerHeight, containerWidth, responsiveHeight, responsiveWidth, containerImageBitmapData, subCategories, printerType)
+//             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+//         `;
+
+//         const result = await queryDB(sql, [
+//             containerName,
+//             containerHeight,
+//             containerWidth,
+//             formattedResponsiveHeight,
+//             formattedResponsiveWidth,
+//             JSON.stringify(containerImageBitmapData),
+//             subCategories,
+//             printerType
+//         ]);
+
+//         console.log("✅ Successfully inserted data:", result);
+//         res.json(result);
+//     } catch (err) {
+//         console.error("❌ Error inserting main container data:", err);
+//         res.status(500).json({ error: "An error occurred while inserting data." });
+//     }
+// });
 
 
 router.post('/newVersion/mainContainers/add', async (req, res) => {
@@ -50,7 +92,16 @@ router.post('/newVersion/mainContainers/add', async (req, res) => {
             printerType
         } = req.body;
 
-        // Always convert to float (which will be stored as DOUBLE in MySQL)
+        // Basic validation
+        if (!containerName || !containerHeight || !containerWidth || !responsiveHeight || !responsiveWidth || !containerImageBitmapData || !printerType) {
+            return res.status(400).json({
+                status: false,
+                message: "Missing required fields.",
+                result: []
+            });
+        }
+
+        // Convert to float
         const formattedResponsiveHeight = parseFloat(responsiveHeight);
         const formattedResponsiveWidth = parseFloat(responsiveWidth);
 
@@ -72,54 +123,71 @@ router.post('/newVersion/mainContainers/add', async (req, res) => {
         ]);
 
         console.log("✅ Successfully inserted data:", result);
-        res.json(result);
+
+        res.status(201).json({
+            status: true,
+            message: "Main container added successfully.",
+            result: {
+                insertId: result.insertId || null,
+                containerName,
+                containerHeight,
+                containerWidth,
+                responsiveHeight: formattedResponsiveHeight,
+                responsiveWidth: formattedResponsiveWidth,
+                subCategories,
+                printerType
+            }
+        });
     } catch (err) {
         console.error("❌ Error inserting main container data:", err);
-        res.status(500).json({ error: "An error occurred while inserting data." });
+        res.status(500).json({
+            status: false,
+            message: "An error occurred while inserting data.",
+            result: []
+        });
     }
 });
 
+router.put('/newVersion/mainContainers/update/:id', async (req, res) => {
+    try {
+        const mainContainersId = req.params.id;
+        const {
+            containerName,
+            containerHeight,
+            containerWidth,
+            responsiveHeight,
+            responsiveWidth,
+            containerImageBitmapData,
+            subCategories,
+            printerType
+        } = req.body;
 
-// Update main container
-// router.put('/newVersion/mainContainers/update/:id', async (req, res) => {
-//     try {
-//         const mainContainersId = req.params.id;
-//         const {
-//             containerName,
-//             containerHeight,
-//             containerWidth,
-//             responsiveHeight,
-//             responsiveWidth,
-//             containerImageBitmapData,
-//             subCategories,
-//             printerType
-//         } = req.body;
+        const sql = `
+            UPDATE maincontainertable_newversion 
+            SET containerName = ?, containerHeight = ?, containerWidth = ?, responsiveHeight = ?, responsiveWidth = ?, 
+                containerImageBitmapData = ?, subCategories = ?, printerType = ? 
+            WHERE id = ?
+        `;
+        const result = await queryDB(sql, [
+            containerName,
+            containerHeight,
+            containerWidth,
+            responsiveHeight,
+            responsiveWidth,
+            JSON.stringify(containerImageBitmapData),
+            subCategories,
+            printerType,
+            mainContainersId
+        ]);
 
-//         const sql = `
-//             UPDATE maincontainertable_newversion 
-//             SET containerName = ?, containerHeight = ?, containerWidth = ?, responsiveHeight = ?, responsiveWidth = ?, 
-//                 containerImageBitmapData = ?, subCategories = ?, printerType = ? 
-//             WHERE id = ?
-//         `;
-//         const result = await queryDB(sql, [
-//             containerName,
-//             containerHeight,
-//             containerWidth,
-//             responsiveHeight,
-//             responsiveWidth,
-//             JSON.stringify(containerImageBitmapData),
-//             subCategories,
-//             printerType,
-//             mainContainersId
-//         ]);
+        console.log("Successfully updated data", result);
+        res.json(result);
+    } catch (err) {
+        console.error("Error updating main container:", err);
+        res.status(500).json({ error: "An error occurred while updating data." });
+    }
+});
 
-//         console.log("Successfully updated data", result);
-//         res.json(result);
-//     } catch (err) {
-//         console.error("Error updating main container:", err);
-//         res.status(500).json({ error: "An error occurred while updating data." });
-//     }
-// });
 function forceNotInteger(value) {
     const parsed = parseFloat(value);
     if (Number.isNaN(parsed)) return 0;
@@ -167,7 +235,6 @@ router.get('/newVersion/mainContainers/get/main/:id', async (req, res) => {
     }
 });
 
-
 router.get('/newVersion/mainContainers/get/main/:id', async (req, res) => {
     try {
         const id = req.params.id;
@@ -208,9 +275,6 @@ router.get('/newVersion/mainContainers/get/main/:id', async (req, res) => {
     }
 });
 
-
-
-// Get by subcategory
 router.get('/newVersion/mainContainers/:subCategories', async (req, res) => {
     try {
         const subCategories = req.params.subCategories;
@@ -230,7 +294,6 @@ router.get('/newVersion/mainContainers/:subCategories', async (req, res) => {
     }
 });
 
-// Get by ID
 router.get('/newVersion/mainContainers/get/main/:id', async (req, res) => {
     try {
         const id = req.params.id;
@@ -250,7 +313,6 @@ router.get('/newVersion/mainContainers/get/main/:id', async (req, res) => {
     }
 });
 
-// Get all main containers
 router.get('/newVersion/mainContainers', async (req, res) => {
     try {
         const sql = `
@@ -283,7 +345,6 @@ router.get('/newVersion/mainContainers', async (req, res) => {
     }
 });
 
-
 router.delete('/newVersion/mainContainers/delete/:id', async (req, res) => {
     const mainContainersId = req.params.id;
 
@@ -300,16 +361,186 @@ router.delete('/newVersion/mainContainers/delete/:id', async (req, res) => {
     }
 });
 
+// router.post('/newVersion/widgetContainers/add', async (req, res) => {
+//     const {
+//         mainContainerId,
+//         widgetType,  // Updated field
+//         contentData,
+//         offsetDx,
+//         offsetDy,
+//         width,  // Updated field
+//         height,
+//         rotation,
+//         selectTimeTextScanInt,
+//         isBold,
+//         isUnderline,
+//         isItalic,
+//         fontSize,
+//         textAlignment, // Updated field
+//         checkTextIdentifyWidget, // New field (type: text)
+//         barEncodingType, // New field (type: text)
+//         rowCount,
+//         columnCount,
+//         tablesCells, // New field (type: text)
+//         tablesRowHeights, // New field (type: text)
+//         tablesColumnWidths, // New field (type: text)
+//         selectedEmojiIcons,
+//         prefix,
+//         suffix,
+//         shapeTypes, // New field (type: text)
+//         isRectangale,
+//         isRoundRectangale,
+//         isCircularFixed,
+//         isCircularNotFixed,
+//         widgetLineWidth,  // Updated field
+//         isFixedFigureSize,  // New field
+//         trueShapeWidth, // New field (type: double)
+//         trueShapeHeight, // New field (type: double)
+//         isDottedLine,
+//         columnWidths,
+//         rowHeights,
+//         cellTexts,
+//         tableTextAlignment,
+//         tableTextBold,
+//         tableTextUnderline,
+//         tableTextItalic,
+//         tableTextFontSize,
+//         fontFamily
+//     } = req.body;
 
+
+//     const dataToStore = {
+//         mainContainerId,
+//         widgetType,
+//         contentData,
+//         offsetDx,
+//         offsetDy,
+//         width,
+//         height: height || null,
+//         rotation: rotation,
+//         selectTimeTextScanInt: selectTimeTextScanInt || null,
+//         isBold: isBold || 0,
+//         isUnderline: isUnderline || 0,
+//         isItalic: isItalic || 0,
+//         fontSize: fontSize,
+//         textAlignment: textAlignment || "left",
+//         checkTextIdentifyWidget,
+//         barEncodingType,
+//         rowCount: rowCount || null,
+//         columnCount: columnCount || null,
+//         tablesCells,
+//         tablesRowHeights,
+//         tablesColumnWidths,
+//         selectedEmojiIcons: selectedEmojiIcons || {},
+//         prefix: prefix || null,
+//         suffix: suffix || null,
+//         shapeTypes,
+//         isRectangale: isRectangale || 0,
+//         isRoundRectangale: isRoundRectangale || 0,
+//         isCircularFixed: isCircularFixed || 0,
+//         isCircularNotFixed: isCircularNotFixed || 0,
+//         widgetLineWidth,
+//         isFixedFigureSize: isFixedFigureSize || 0,
+//         trueShapeWidth,
+//         trueShapeHeight,
+//         isDottedLine: isDottedLine || 0,
+//         columnWidths: columnWidths || null,
+//         rowHeights: rowHeights || null,
+//         cellTexts: cellTexts || null,
+//         tableTextAlignment: tableTextAlignment || null,
+//         tableTextBold: tableTextBold || 0,
+//         tableTextUnderline: tableTextUnderline || 0,
+//         tableTextItalic: tableTextItalic || 0,
+//         tableTextFontSize: tableTextFontSize || null,
+//         fontFamily: fontFamily || null,
+//     };
+
+//     try {
+//         //     const sql = `INSERT INTO widgetcontainertable_newversion 
+//         // (mainContainerId, widgetType, contentData, offsetDx, offsetDy, width, height, rotation, selectTimeTextScanInt, 
+//         // isBold, isUnderline, isItalic, fontSize, textAlignment, checkTextIdentifyWidget, barEncodingType, rowCount, columnCount, 
+//         // tablesCells, tablesRowHeights, tablesColumnWidths, selectedEmojiIcons, prefix, suffix, shapeTypes, 
+//         // isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth, isFixedFigureSize, 
+//         // trueShapeWidth, trueShapeHeight, isDottedLine, columnWidths, rowHeights, cellTexts, tableTextAlignment, 
+//         // tableTextBold, tableTextUnderline, tableTextItalic, fontFamily)
+//         // VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+//         const sql = `INSERT INTO widgetcontainertable_newversion 
+// (mainContainerId, widgetType, contentData, offsetDx, offsetDy, width, height, rotation, selectTimeTextScanInt, 
+// isBold, isUnderline, isItalic, fontSize, textAlignment, checkTextIdentifyWidget, barEncodingType, rowCount, columnCount, 
+// tablesCells, tablesRowHeights, tablesColumnWidths, selectedEmojiIcons, prefix, suffix, shapeTypes, 
+// isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth, isFixedFigureSize, 
+// trueShapeWidth, trueShapeHeight, isDottedLine, columnWidths, rowHeights, cellTexts, tableTextAlignment, 
+// tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize, fontFamily)
+// VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
+
+//         const result = await queryDatabase(sql, [
+//             dataToStore.mainContainerId,
+//             dataToStore.widgetType,
+//             dataToStore.contentData,
+//             dataToStore.offsetDx,
+//             dataToStore.offsetDy,
+//             dataToStore.width,
+//             dataToStore.height,
+//             dataToStore.rotation,
+//             dataToStore.selectTimeTextScanInt,
+//             dataToStore.isBold,
+//             dataToStore.isUnderline,
+//             dataToStore.isItalic,
+//             dataToStore.fontSize,
+//             dataToStore.textAlignment,
+//             dataToStore.checkTextIdentifyWidget,
+//             dataToStore.barEncodingType,
+//             dataToStore.rowCount,
+//             dataToStore.columnCount,
+//             dataToStore.tablesCells,
+//             dataToStore.tablesRowHeights,
+//             dataToStore.tablesColumnWidths,
+//             // JSON.stringify(dataToStore.selectedEmojiIcons),
+//             Buffer.isBuffer(dataToStore.selectedEmojiIcons)
+//                 ? dataToStore.selectedEmojiIcons
+//                 : null,
+//             dataToStore.prefix,
+//             dataToStore.suffix,
+//             dataToStore.shapeTypes,
+//             dataToStore.isRectangale,
+//             dataToStore.isRoundRectangale,
+//             dataToStore.isCircularFixed,
+//             dataToStore.isCircularNotFixed,
+//             dataToStore.widgetLineWidth,
+//             dataToStore.isFixedFigureSize,
+//             dataToStore.trueShapeWidth,
+//             dataToStore.trueShapeHeight,
+//             dataToStore.isDottedLine,
+//             dataToStore.columnWidths,
+//             dataToStore.rowHeights,
+//             dataToStore.cellTexts,
+//             dataToStore.tableTextAlignment,
+//             dataToStore.tableTextBold,
+//             dataToStore.tableTextUnderline,
+//             dataToStore.tableTextItalic,
+//             dataToStore.tableTextFontSize,
+//             dataToStore.fontFamily
+//         ]);
+
+//         console.log("Successfully inserted data", result);
+//         res.json(result);
+//     } catch (err) {
+//         console.error("Error inserting data:", err.message);
+
+//         console.log("Error inserting data:", err.message);
+//         res.status(500).json({ error: "An error occurred while inserting data." });
+//     }
+// });
 
 router.post('/newVersion/widgetContainers/add', async (req, res) => {
     const {
         mainContainerId,
-        widgetType,  // Updated field
+        widgetType,
         contentData,
         offsetDx,
         offsetDy,
-        width,  // Updated field
+        width,
         height,
         rotation,
         selectTimeTextScanInt,
@@ -317,26 +548,26 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
         isUnderline,
         isItalic,
         fontSize,
-        textAlignment, // Updated field
-        checkTextIdentifyWidget, // New field (type: text)
-        barEncodingType, // New field (type: text)
+        textAlignment,
+        checkTextIdentifyWidget,
+        barEncodingType,
         rowCount,
         columnCount,
-        tablesCells, // New field (type: text)
-        tablesRowHeights, // New field (type: text)
-        tablesColumnWidths, // New field (type: text)
+        tablesCells,
+        tablesRowHeights,
+        tablesColumnWidths,
         selectedEmojiIcons,
         prefix,
         suffix,
-        shapeTypes, // New field (type: text)
+        shapeTypes,
         isRectangale,
         isRoundRectangale,
         isCircularFixed,
         isCircularNotFixed,
-        widgetLineWidth,  // Updated field
-        isFixedFigureSize,  // New field
-        trueShapeWidth, // New field (type: double)
-        trueShapeHeight, // New field (type: double)
+        widgetLineWidth,
+        isFixedFigureSize,
+        trueShapeWidth,
+        trueShapeHeight,
         isDottedLine,
         columnWidths,
         rowHeights,
@@ -349,7 +580,6 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
         fontFamily
     } = req.body;
 
-
     const dataToStore = {
         mainContainerId,
         widgetType,
@@ -358,12 +588,12 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
         offsetDy,
         width,
         height: height || null,
-        rotation: rotation,
+        rotation,
         selectTimeTextScanInt: selectTimeTextScanInt || null,
         isBold: isBold || 0,
         isUnderline: isUnderline || 0,
         isItalic: isItalic || 0,
-        fontSize: fontSize,
+        fontSize,
         textAlignment: textAlignment || "left",
         checkTextIdentifyWidget,
         barEncodingType,
@@ -397,23 +627,16 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
     };
 
     try {
-        //     const sql = `INSERT INTO widgetcontainertable_newversion 
-        // (mainContainerId, widgetType, contentData, offsetDx, offsetDy, width, height, rotation, selectTimeTextScanInt, 
-        // isBold, isUnderline, isItalic, fontSize, textAlignment, checkTextIdentifyWidget, barEncodingType, rowCount, columnCount, 
-        // tablesCells, tablesRowHeights, tablesColumnWidths, selectedEmojiIcons, prefix, suffix, shapeTypes, 
-        // isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth, isFixedFigureSize, 
-        // trueShapeWidth, trueShapeHeight, isDottedLine, columnWidths, rowHeights, cellTexts, tableTextAlignment, 
-        // tableTextBold, tableTextUnderline, tableTextItalic, fontFamily)
-        // VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
-        const sql = `INSERT INTO widgetcontainertable_newversion 
-(mainContainerId, widgetType, contentData, offsetDx, offsetDy, width, height, rotation, selectTimeTextScanInt, 
-isBold, isUnderline, isItalic, fontSize, textAlignment, checkTextIdentifyWidget, barEncodingType, rowCount, columnCount, 
-tablesCells, tablesRowHeights, tablesColumnWidths, selectedEmojiIcons, prefix, suffix, shapeTypes, 
-isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth, isFixedFigureSize, 
-trueShapeWidth, trueShapeHeight, isDottedLine, columnWidths, rowHeights, cellTexts, tableTextAlignment, 
-tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize, fontFamily)
-VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
-
+        const sql = `
+            INSERT INTO widgetcontainertable_newversion 
+            (mainContainerId, widgetType, contentData, offsetDx, offsetDy, width, height, rotation, selectTimeTextScanInt, 
+            isBold, isUnderline, isItalic, fontSize, textAlignment, checkTextIdentifyWidget, barEncodingType, rowCount, columnCount, 
+            tablesCells, tablesRowHeights, tablesColumnWidths, selectedEmojiIcons, prefix, suffix, shapeTypes, 
+            isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth, isFixedFigureSize, 
+            trueShapeWidth, trueShapeHeight, isDottedLine, columnWidths, rowHeights, cellTexts, tableTextAlignment, 
+            tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize, fontFamily)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        `;
 
         const result = await queryDatabase(sql, [
             dataToStore.mainContainerId,
@@ -437,7 +660,6 @@ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
             dataToStore.tablesCells,
             dataToStore.tablesRowHeights,
             dataToStore.tablesColumnWidths,
-            // JSON.stringify(dataToStore.selectedEmojiIcons),
             Buffer.isBuffer(dataToStore.selectedEmojiIcons)
                 ? dataToStore.selectedEmojiIcons
                 : null,
@@ -464,17 +686,27 @@ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,
             dataToStore.fontFamily
         ]);
 
-        console.log("Successfully inserted data", result);
-        res.json(result);
-    } catch (err) {
-        console.error("Error inserting data:", err.message);
+        console.log("✅ Successfully inserted widget data:", result);
 
-        console.log("Error inserting data:", err.message);
-        res.status(500).json({ error: "An error occurred while inserting data." });
+        res.status(201).json({
+            status: true,
+            message: "Widget container added successfully.",
+            result: {
+                insertId: result.insertId || null,
+                ...dataToStore
+            }
+        });
+    } catch (err) {
+        console.error("❌ Error inserting widget data:", err.message);
+
+        res.status(500).json({
+            status: false,
+            message: "An error occurred while inserting widget data.",
+            result: []
+        });
     }
 });
 
-// Get all widget containers
 router.get('/newVersion/widgetContainers/get', async (req, res) => {
     try {
         const sql = 'SELECT * FROM widgetcontainertable_newversion';
@@ -490,6 +722,121 @@ router.get('/newVersion/widgetContainers/get', async (req, res) => {
     }
 });
 
+router.get('/newVersion/mainContainers/printerTypeSubCategories/filter', async (req, res) => {
+    try {
+        const { printerType, subCategories } = req.query; // ✅ Use query for GET request
+
+        if (!printerType) {
+            return res.status(400).json({
+                status: false,
+                message: "printerType is required.",
+                result: []
+            });
+        }
+
+        let sql = `
+            SELECT 
+                id, containerName, containerHeight, containerWidth, responsiveHeight, responsiveWidth,
+                CONVERT(containerImageBitmapData USING utf8) AS containerImageBitmapData, 
+                subCategories, printerType 
+            FROM maincontainertable_newversion
+            WHERE printerType = ?
+        `;
+        const params = [printerType];
+
+        if (subCategories) {
+            sql += ` AND subCategories = ?`;
+            params.push(subCategories);
+        }
+
+        const results = await queryDatabase(sql, params);
+
+        if (results.length === 0) {
+            return res.status(200).json({
+                status: true,
+                message: "No matching data found.",
+                result: []
+            });
+        }
+
+        // Modify responsiveWidth if it's an integer
+        const modifiedResults = results.map(row => {
+            const responsiveWidth = parseFloat(row.responsiveWidth);
+            row.responsiveWidth = Number.isInteger(responsiveWidth)
+                ? responsiveWidth + 0.01
+                : responsiveWidth;
+            return row;
+        });
+
+        res.status(200).json({
+            status: true,
+            message: "Data fetched successfully.",
+            result: modifiedResults
+        });
+    } catch (err) {
+        console.error("Error fetching filtered container data:", err.message);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred while fetching filtered data.",
+            result: []
+        });
+    }
+});
+
+router.get('/newVersion/mainContainers/filter/searchByContainerName', async (req, res) => {
+    try {
+        const { containerName } = req.query;
+
+        if (!containerName) {
+            return res.status(400).json({
+                status: false,
+                message: "Search containerName is required.",
+                result: []
+            });
+        }
+
+        const sql = `
+            SELECT 
+                id, containerName, containerHeight, containerWidth, responsiveHeight, responsiveWidth,
+                CONVERT(containerImageBitmapData USING utf8) AS containerImageBitmapData, 
+                subCategories, printerType 
+            FROM maincontainertable_newversion
+            WHERE containerName LIKE ?
+        `;
+        const searchParam = `%${containerName}%`;
+
+        const results = await queryDatabase(sql, [searchParam]);
+
+        if (results.length === 0) {
+            return res.status(200).json({
+                status: true,
+                message: "No matching container names found.",
+                result: []
+            });
+        }
+
+        const modifiedResults = results.map(row => {
+            const responsiveWidth = parseFloat(row.responsiveWidth);
+            row.responsiveWidth = Number.isInteger(responsiveWidth)
+                ? responsiveWidth + 0.01
+                : responsiveWidth;
+            return row;
+        });
+
+        res.status(200).json({
+            status: true,
+            message: "Matching container names fetched successfully.",
+            result: modifiedResults
+        });
+    } catch (err) {
+        console.error("Error searching containerName:", err.message);
+        return res.status(500).json({
+            status: false,
+            message: "An error occurred while searching container names.",
+            result: []
+        });
+    }
+});
 
 router.get('/newVersion/widgetContainers/getMain/:id', async (req, res) => {
     const mainContainerId = req.params.id;
@@ -520,7 +867,6 @@ router.get('/newVersion/widgetContainers/getMain/:id', async (req, res) => {
     }
 });
 
-// Delete all widgets for a main container
 router.delete('/newVersion/widgetContainers/multiDelete/:mainId', async (req, res) => {
     const mainId = req.params.mainId;
 
@@ -538,7 +884,6 @@ router.delete('/newVersion/widgetContainers/multiDelete/:mainId', async (req, re
     }
 });
 
-//Here 2 API to delete previous widgetContainers data after update
 router.get('/newVersion/widgetContainers/getIdsByMainContainerId/:mainContainerId', async (req, res) => {
     const { mainContainerId } = req.params;
 
