@@ -78,7 +78,7 @@ const queryDatabase = async (sql, params) => {
 //     }
 // });
 
-
+//New API
 router.post('/newVersion/mainContainers/add', async (req, res) => {
     try {
         const {
@@ -361,6 +361,7 @@ router.delete('/newVersion/mainContainers/delete/:id', async (req, res) => {
     }
 });
 
+//Old API
 // router.post('/newVersion/widgetContainers/add', async (req, res) => {
 //     const {
 //         mainContainerId,
@@ -533,6 +534,7 @@ router.delete('/newVersion/mainContainers/delete/:id', async (req, res) => {
 //     }
 // });
 
+//New API
 router.post('/newVersion/widgetContainers/add', async (req, res) => {
     const {
         mainContainerId,
@@ -556,7 +558,7 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
         tablesCells,
         tablesRowHeights,
         tablesColumnWidths,
-        selectedEmojiIcons,
+        selectedEmojiIcons, // Your raw array
         prefix,
         suffix,
         shapeTypes,
@@ -580,6 +582,11 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
         fontFamily
     } = req.body;
 
+    // Ensure selectedEmojiIcons remains a string like "255,216,255,..."
+    const emojiIconString = Array.isArray(selectedEmojiIcons)
+        ? selectedEmojiIcons.join(',')
+        : selectedEmojiIcons;
+
     const dataToStore = {
         mainContainerId,
         widgetType,
@@ -588,12 +595,12 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
         offsetDy,
         width,
         height: height || null,
-        rotation,
+        rotation: rotation,
         selectTimeTextScanInt: selectTimeTextScanInt || null,
         isBold: isBold || 0,
         isUnderline: isUnderline || 0,
         isItalic: isItalic || 0,
-        fontSize,
+        fontSize: fontSize,
         textAlignment: textAlignment || "left",
         checkTextIdentifyWidget,
         barEncodingType,
@@ -602,7 +609,7 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
         tablesCells,
         tablesRowHeights,
         tablesColumnWidths,
-        selectedEmojiIcons: selectedEmojiIcons || {},
+        selectedEmojiIcons: emojiIconString, // store as comma-separated string
         prefix: prefix || null,
         suffix: suffix || null,
         shapeTypes,
@@ -630,11 +637,11 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
         const sql = `
             INSERT INTO widgetcontainertable_newversion 
             (mainContainerId, widgetType, contentData, offsetDx, offsetDy, width, height, rotation, selectTimeTextScanInt, 
-            isBold, isUnderline, isItalic, fontSize, textAlignment, checkTextIdentifyWidget, barEncodingType, rowCount, columnCount, 
-            tablesCells, tablesRowHeights, tablesColumnWidths, selectedEmojiIcons, prefix, suffix, shapeTypes, 
-            isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth, isFixedFigureSize, 
-            trueShapeWidth, trueShapeHeight, isDottedLine, columnWidths, rowHeights, cellTexts, tableTextAlignment, 
-            tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize, fontFamily)
+             isBold, isUnderline, isItalic, fontSize, textAlignment, checkTextIdentifyWidget, barEncodingType, rowCount, columnCount, 
+             tablesCells, tablesRowHeights, tablesColumnWidths, selectedEmojiIcons, prefix, suffix, shapeTypes, 
+             isRectangale, isRoundRectangale, isCircularFixed, isCircularNotFixed, widgetLineWidth, isFixedFigureSize, 
+             trueShapeWidth, trueShapeHeight, isDottedLine, columnWidths, rowHeights, cellTexts, tableTextAlignment, 
+             tableTextBold, tableTextUnderline, tableTextItalic, tableTextFontSize, fontFamily)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         `;
 
@@ -660,9 +667,7 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
             dataToStore.tablesCells,
             dataToStore.tablesRowHeights,
             dataToStore.tablesColumnWidths,
-            Buffer.isBuffer(dataToStore.selectedEmojiIcons)
-                ? dataToStore.selectedEmojiIcons
-                : null,
+            dataToStore.selectedEmojiIcons,
             dataToStore.prefix,
             dataToStore.suffix,
             dataToStore.shapeTypes,
@@ -686,8 +691,6 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
             dataToStore.fontFamily
         ]);
 
-        console.log("✅ Successfully inserted widget data:", result);
-
         res.status(201).json({
             status: true,
             message: "Widget container added successfully.",
@@ -698,7 +701,6 @@ router.post('/newVersion/widgetContainers/add', async (req, res) => {
         });
     } catch (err) {
         console.error("❌ Error inserting widget data:", err.message);
-
         res.status(500).json({
             status: false,
             message: "An error occurred while inserting widget data.",
@@ -785,32 +787,37 @@ router.get('/newVersion/mainContainers/printerTypeSubCategories/filter', async (
 
 router.get('/newVersion/mainContainers/filter/searchByContainerName', async (req, res) => {
     try {
-        const { containerName } = req.query;
+        const { printerType, containerName } = req.query;
 
-        if (!containerName) {
+        if (!printerType) {
             return res.status(400).json({
                 status: false,
-                message: "Search containerName is required.",
+                message: "printerType is required.",
                 result: []
             });
         }
 
-        const sql = `
+        let sql = `
             SELECT 
                 id, containerName, containerHeight, containerWidth, responsiveHeight, responsiveWidth,
                 CONVERT(containerImageBitmapData USING utf8) AS containerImageBitmapData, 
                 subCategories, printerType 
             FROM maincontainertable_newversion
-            WHERE containerName LIKE ?
+            WHERE printerType = ?
         `;
-        const searchParam = `%${containerName}%`;
+        const params = [printerType];
 
-        const results = await queryDatabase(sql, [searchParam]);
+        if (containerName) {
+            sql += ` AND containerName LIKE ?`;
+            params.push(`%${containerName}%`);
+        }
+
+        const results = await queryDatabase(sql, params);
 
         if (results.length === 0) {
             return res.status(200).json({
                 status: true,
-                message: "No matching container names found.",
+                message: "No matching data found.",
                 result: []
             });
         }
@@ -825,14 +832,14 @@ router.get('/newVersion/mainContainers/filter/searchByContainerName', async (req
 
         res.status(200).json({
             status: true,
-            message: "Matching container names fetched successfully.",
+            message: "Matching data fetched successfully.",
             result: modifiedResults
         });
     } catch (err) {
-        console.error("Error searching containerName:", err.message);
+        console.error("Error fetching data:", err.message);
         return res.status(500).json({
             status: false,
-            message: "An error occurred while searching container names.",
+            message: "An error occurred while fetching data.",
             result: []
         });
     }
