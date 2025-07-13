@@ -25,8 +25,8 @@ const executeQuery = (query, params) => {
 };
 
 // Get version info
-router.get('/attendanceMachine/allVersion', async (req, res) => {
-    const query = 'SELECT * FROM attendanceMachineVersion';
+router.get('/smartDot/allVersion', async (req, res) => {
+    const query = 'SELECT * FROM smartDotVersion';
     try {
         const results = await executeQuery(query, []);
         res.json(results.length > 0 ? results : []);
@@ -35,8 +35,8 @@ router.get('/attendanceMachine/allVersion', async (req, res) => {
     }
 });
 // Get version info
-router.get('/attendanceMachine/version/global', async (req, res) => {
-    const query = 'SELECT * FROM attendanceMachineVersion WHERE region = ?';
+router.get('/smartDot/version/global', async (req, res) => {
+    const query = 'SELECT * FROM smartDotVersion WHERE region = ?';
     try {
         const results = await executeQuery(query, ['EN']);
         res.json({
@@ -49,8 +49,8 @@ router.get('/attendanceMachine/version/global', async (req, res) => {
 });
 
 // Get chinese version info
-router.get('/attendanceMachine/version/china', async (req, res) => {
-    const query = 'SELECT * FROM attendanceMachineVersion WHERE region = ?';
+router.get('/smartDot/version/china', async (req, res) => {
+    const query = 'SELECT * FROM smartDotVersion WHERE region = ?';
     try {
         const results = await executeQuery(query, ['ZH']);
         res.json({
@@ -63,7 +63,7 @@ router.get('/attendanceMachine/version/china', async (req, res) => {
 });
 
 // Create version info
-router.post('/attendanceMachine/version/add', async (req, res) => {
+router.post('/smartDot/version/add', async (req, res) => {
     const { modelName, region, versionCategory, sliderImageMark } = req.body;
 
     if (!modelName || !region || !versionCategory || !sliderImageMark) {
@@ -73,13 +73,13 @@ router.post('/attendanceMachine/version/add', async (req, res) => {
         });
     }
 
-    const query = `INSERT INTO attendanceMachineVersion (modelName, region, versionCategory, sliderImageMark) VALUES (?, ?, ?, ?)`;
+    const query = `INSERT INTO smartDotVersion (modelName, region, versionCategory, sliderImageMark) VALUES (?, ?, ?, ?)`;
 
     try {
         const result = await executeQuery(query, [modelName, region, versionCategory, sliderImageMark]);
         res.json({
             status: 'success',
-            message: 'Attendance Machine Version info created successfully.',
+            message: 'Smart Dot Version info created successfully.',
             result
         });
     } catch (err) {
@@ -88,7 +88,7 @@ router.post('/attendanceMachine/version/add', async (req, res) => {
 });
 
 // Update version info
-router.put('/attendanceMachine/version/update/:id', async (req, res) => {
+router.put('/smartDot/version/update/:id', async (req, res) => {
     const { id } = req.params;
     const { modelName, region, versionCategory, sliderImageMark } = req.body;
 
@@ -100,7 +100,7 @@ router.put('/attendanceMachine/version/update/:id', async (req, res) => {
     }
 
     const query = `
-        UPDATE attendanceMachineVersion 
+        UPDATE smartDotVersion 
         SET modelName = ?, region = ?, versionCategory = ?, sliderImageMark=?
         WHERE id = ?
     `;
@@ -109,7 +109,7 @@ router.put('/attendanceMachine/version/update/:id', async (req, res) => {
         const result = await executeQuery(query, [modelName, region, versionCategory, sliderImageMark, id]);
         res.json({
             status: 'success',
-            message: 'Attendance Machine Version info updated successfully.',
+            message: 'Smart Dot Version info updated successfully.',
             result
         });
     } catch (err) {
@@ -118,7 +118,7 @@ router.put('/attendanceMachine/version/update/:id', async (req, res) => {
 });
 
 // Delete version info
-router.delete('/attendanceMachine/version/delete/:id', async (req, res) => {
+router.delete('/smartDot/version/delete/:id', async (req, res) => {
     const { id } = req.params;
 
     if (!id) {
@@ -128,7 +128,7 @@ router.delete('/attendanceMachine/version/delete/:id', async (req, res) => {
         });
     }
 
-    const query = `DELETE FROM attendanceMachineVersion WHERE id = ?`;
+    const query = `DELETE FROM smartDotVersion WHERE id = ?`;
 
     try {
         const result = await executeQuery(query, [id]);
@@ -142,7 +142,7 @@ router.delete('/attendanceMachine/version/delete/:id', async (req, res) => {
 
         res.json({
             status: 'success',
-            message: 'Attendance Machine Version info deleted successfully.',
+            message: 'Smart Dot info deleted successfully.',
             result
         });
     } catch (err) {
