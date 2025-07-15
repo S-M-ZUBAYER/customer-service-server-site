@@ -1003,42 +1003,67 @@ const updateDatabase = (sql, values, res, successMessage) => {
   });
 };
 
-// Update main product information
-router.put('/eventProductImages/update/:id', upload.single('newProductImg'), (req, res) => {
-  const {
-    productName,
-    oldImg,
-    productPrice,
-    productOriginalPrice,
-    productDescription,
-    modelNumber,
-    printerColor,
-    connectorType,
-    stockQuantity,
-    shelfStartTime,
-    shelfEndTime,
-    afterSalesText,
-    afterSalesInstruction,
-    inventoryText,
-  } = JSON.parse(req.body.updatedProduct);
+router.put('/eventProductImages/update/:id', upload.single('newProductImg'), async (req, res) => {
+  try {
+    const {
+      productName,
+      oldImg,
+      productImgRemark,
+      productPrice,
+      productOriginalPrice,
+      productDescription,
+      modelNumber,
+      printerColor,
+      connectorType,
+      stockQuantity,
+      shelfStartTime,
+      shelfEndTime,
+      afterSalesText,
+      afterSalesInstruction,
+      inventoryText,
+    } = JSON.parse(req.body.updatedProduct);
 
-  const productImgFile = req.file;
-  const productImg = productImgFile ? productImgFile.filename : null;
+    const productImgFile = req.file;
+    const productImg = productImgFile?.filename ?? oldImg;
 
-  if (oldImg) {
-    deleteFiles([`public/eventProductImages/${oldImg}`]);
+    // If a new image is uploaded and oldImg exists, delete the old one
+    if (productImgFile && oldImg) {
+      await deleteFiles([`public/eventProductImages/${oldImg}`]);
+    }
+
+    const sql = `
+      UPDATE eventproducts 
+      SET productName=?, productImgRemark=?, productPrice=?, productOriginalPrice=?, productDescription=?, modelNumber=?, 
+          printerColor=?, connectorType=?, stockQuantity=?, shelfStartTime=?, shelfEndTime=?, afterSalesText=?, 
+          afterSalesInstruction=?, inventoryText=?, productImg=? 
+      WHERE id=?`;
+
+    const params = [
+      productName,
+      productImgRemark,
+      productPrice,
+      productOriginalPrice,
+      productDescription,
+      modelNumber,
+      printerColor,
+      connectorType,
+      stockQuantity,
+      shelfStartTime,
+      shelfEndTime,
+      afterSalesText,
+      afterSalesInstruction,
+      inventoryText,
+      productImg,
+      req.params.id
+    ];
+
+    await updateDatabase(sql, params, res, 'Product updated successfully');
+  } catch (error) {
+    console.error('Error updating event product:', error.message);
+    res.status(500).send('Error updating event product');
   }
-
-  const sql = `
-    UPDATE eventproducts 
-    SET productName=?, productPrice=?, productOriginalPrice=?, productDescription=?, modelNumber=?, printerColor=?, connectorType=?,
-        stockQuantity=?, shelfStartTime=?, shelfEndTime=?, afterSalesText=?, afterSalesInstruction=?, 
-        inventoryText=?, productImg=? 
-    WHERE id=?`;
-
-  updateDatabase(sql, [productName, productPrice, productOriginalPrice, productDescription, modelNumber, printerColor, connectorType,
-    stockQuantity, shelfStartTime, shelfEndTime, afterSalesText, afterSalesInstruction, inventoryText, productImg, req.params.id], res, 'Product updated successfully');
 });
+
 
 // Update text information
 router.put('/eventProductImages/update/textInformation/:id', (req, res) => {

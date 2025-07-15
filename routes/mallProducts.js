@@ -1175,6 +1175,7 @@ router.put('/mallProductImages/update/:id', upload.single('newProductImg'), asyn
     const {
       productName,
       oldImg,
+      productImgRemark,
       productPrice,
       productOriginalPrice,
       productDescription,
@@ -1190,16 +1191,17 @@ router.put('/mallProductImages/update/:id', upload.single('newProductImg'), asyn
     } = JSON.parse(req.body.updatedProduct);
 
     const productImgFile = req.file;
-    const imgFilePath = `public/mallProductImages/${oldImg}`;
+    const productImg = productImgFile?.filename ?? oldImg;
 
-    // Delete old image if it exists
-    await deleteOldImages([oldImg]);
+    if (productImgFile && oldImg) {
+      await deleteOldImages([oldImg]);
+    }
 
-    const productImg = productImgFile ? productImgFile.filename : null;
+    const sql = `UPDATE mallproducts SET productName=?, productImgRemark=?, productPrice=?, productOriginalPrice=?, productDescription=?, modelNumber=?, printerColor=?, connectorType=?, stockQuantity=?, shelfStartTime=?, shelfEndTime=?, afterSalesText=?, afterSalesInstruction=?, inventoryText=?, productImg=? WHERE id=?`;
 
-    const sql = `UPDATE mallproducts SET productName=?, productPrice=?, productOriginalPrice=?, productDescription=?, modelNumber=?, printerColor=?, connectorType=?, stockQuantity=?, shelfStartTime=?, shelfEndTime=?, afterSalesText=?, afterSalesInstruction=?, inventoryText=?, productImg=? WHERE id=?`;
     const params = [
       productName,
+      productImgRemark,
       productPrice,
       productOriginalPrice,
       productDescription,
